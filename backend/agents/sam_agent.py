@@ -18,8 +18,20 @@ class SAMAgent:
         # 1. 只有在第一次初始化时加载模型
         print("⏳ 正在加载 SAM 3 模型到显存...")
         self.model = build_sam3_image_model()
+        self.model.eval()
         self.processor = Sam3Processor(self.model)
+        self.device_type = "cuda" if torch.cuda.is_available() else "cpu"
+        self.autocast_dtype = (
+            torch.bfloat16
+            if os.getenv("SAM3_AUTOCAST_DTYPE", "bfloat16").lower() == "bfloat16"
+            else torch.float16
+        )
         print("✅ SAM 3 模型加载完成")
+
+    def _autocast_context(self):
+        if self.device_type != "cuda":
+            return torch.autocast(device_type="cpu", enabled=False)
+        return torch.autocast(device_type="cuda", dtype=self.autocast_dtype)
 
     def segment_by_text(self, image_path, text_prompt, output_dir):
         """根据文本提示词分割实体并保存抠图（合并所有有效mask为一个输出）"""
@@ -30,14 +42,13 @@ class SAMAgent:
         image_np = np.array(image)  # 备用：用于后续合并mask的尺寸对齐
         H, W = image_np.shape[:2]   # 获取原图高宽
 
-        # 设置推理状态
-        inference_state = self.processor.set_image(image)
-        
-        # 运行推理
-        output = self.processor.set_text_prompt(
-            state=inference_state, 
-            prompt=text_prompt
-        )
+        with torch.no_grad(), self._autocast_context():
+            # Set image and run text-prompt inference under one dtype context.
+            inference_state = self.processor.set_image(image)
+            output = self.processor.set_text_prompt(
+                state=inference_state,
+                prompt=text_prompt
+            )
         
         masks, boxes, scores = output["masks"], output["boxes"], output["scores"]
         
@@ -53,7 +64,7 @@ class SAMAgent:
                     continue
                 
                 # 处理mask格式（和原逻辑一致）
-                mask_np = mask.cpu().numpy().squeeze()
+                mask_np = mask.float().cpu().numpy().squeeze()
                 if mask_np.ndim != 2:
                     print(f"⚠️ 警告：Mask 维度异常 {mask_np.shape}，尝试进一步处理")
                     if mask_np.ndim == 3 and mask_np.shape[0] == 1:
@@ -66,7 +77,7 @@ class SAMAgent:
                     mask_np = np.array(mask_pil) / 255.0
                 
                 valid_masks.append(mask_np)
-                valid_boxes.append(boxes[i].cpu().numpy().squeeze())
+                valid_boxes.append(boxes[i].float().cpu().numpy().squeeze())
         
         # 第二步：合并所有有效mask为一个
         if len(valid_masks) > 0:
@@ -86,7 +97,7 @@ class SAMAgent:
             ]
             
             # 计算合并后mask的平均置信度（也可以取最高score）
-            avg_score = np.mean([s.cpu().numpy() for s in scores if s >= 0.5])
+            avg_score = np.mean([s.float().cpu().numpy() for s in scores if s >= 0.5])
             
             # 第三步：基于合并后的mask生成抠图
             # 转PIL格式（0/255）

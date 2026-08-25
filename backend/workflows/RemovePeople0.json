@@ -1,0 +1,271 @@
+{
+  "1": {
+    "inputs": {
+      "image": "Flux2-Klein_00063_.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "LoadImage"
+    }
+  },
+  "3": {
+    "inputs": {
+      "filename_prefix": "Flux2-Klein",
+      "images": [
+        "2:65",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "2:61": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "2:64": {
+    "inputs": {
+      "noise": [
+        "2:73",
+        0
+      ],
+      "guider": [
+        "2:63",
+        0
+      ],
+      "sampler": [
+        "2:61",
+        0
+      ],
+      "sigmas": [
+        "2:62",
+        0
+      ],
+      "latent_image": [
+        "2:66",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "2:65": {
+    "inputs": {
+      "samples": [
+        "2:64",
+        0
+      ],
+      "vae": [
+        "2:72",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "2:73": {
+    "inputs": {
+      "noise_seed": 432262096973502
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "2:70": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b-fp8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "2:71": {
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "2:72": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "2:80": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "2:63": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "2:70",
+        0
+      ],
+      "positive": [
+        "2:79:77",
+        0
+      ],
+      "negative": [
+        "2:79:76",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "2:74": {
+    "inputs": {
+      "text": "除去图上的人物和动物，仅保留背景",
+      "clip": [
+        "2:71",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "2:82": {
+    "inputs": {
+      "conditioning": [
+        "2:74",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "2:79:76": {
+    "inputs": {
+      "conditioning": [
+        "2:82",
+        0
+      ],
+      "latent": [
+        "2:79:78",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "2:79:78": {
+    "inputs": {
+      "pixels": [
+        "2:80",
+        0
+      ],
+      "vae": [
+        "2:72",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "2:79:77": {
+    "inputs": {
+      "conditioning": [
+        "2:74",
+        0
+      ],
+      "latent": [
+        "2:79:78",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "2:62": {
+    "inputs": {
+      "steps": 4,
+      "width": [
+        "2:81",
+        0
+      ],
+      "height": [
+        "2:81",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2调度器"
+    }
+  },
+  "2:66": {
+    "inputs": {
+      "width": [
+        "2:81",
+        0
+      ],
+      "height": [
+        "2:81",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "空Latent图像（Flux2）"
+    }
+  },
+  "2:81": {
+    "inputs": {
+      "image": [
+        "2:80",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "获取图像尺寸"
+    }
+  }
+}

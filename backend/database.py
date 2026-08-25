@@ -111,10 +111,33 @@ def init_db():
         );
         ''')
 
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS InteractionMetrics (
+            metric_id TEXT PRIMARY KEY,
+            tree_id INTEGER,
+            node_id TEXT,
+            session_id TEXT,
+            event_type TEXT NOT NULL,
+            module_id TEXT,
+            prompt_input_view TEXT,
+            prompt_text TEXT,
+            negative_prompt TEXT,
+            agent_time_ms REAL,
+            interaction_time_ms REAL,
+            generation_time_ms REAL,
+            speech_timing TEXT,
+            payload TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        ''')
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_child_node ON node_parents (child_node_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_parent_node ON node_parents (parent_node_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_composition_scene ON CompositionRecords (scene_session_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_composition_node ON CompositionRecords (node_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_event ON InteractionMetrics (event_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_node ON InteractionMetrics (node_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_tree ON InteractionMetrics (tree_id)")
 
         conn.commit()
         #conn.close()
@@ -738,6 +761,49 @@ def add_composition_record(payload: dict) -> str | None:
         return record_id
     except sqlite3.Error as e:
         print(f"保存构图记录失败: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def add_interaction_metric(payload: dict) -> str | None:
+    """
+    保存一次实验/交互指标。前端不展示，仅用于后续 case study 分析。
+    payload 可包含 prompt、语音 timing、agent/generation/interaction 耗时等字段。
+    """
+    metric_id = payload.get('metric_id') or str(uuid.uuid4())
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            '''
+            INSERT INTO InteractionMetrics
+                (metric_id, tree_id, node_id, session_id, event_type, module_id,
+                 prompt_input_view, prompt_text, negative_prompt,
+                 agent_time_ms, interaction_time_ms, generation_time_ms,
+                 speech_timing, payload)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                metric_id,
+                payload.get('tree_id'),
+                payload.get('node_id'),
+                payload.get('session_id'),
+                payload.get('event_type') or payload.get('type') or 'unknown',
+                payload.get('module_id'),
+                payload.get('prompt_input_view') or payload.get('prompt_view'),
+                payload.get('prompt_text') or payload.get('positive_prompt'),
+                payload.get('negative_prompt'),
+                payload.get('agent_time_ms'),
+                payload.get('interaction_time_ms'),
+                payload.get('generation_time_ms'),
+                json.dumps(payload.get('speech_timing'), ensure_ascii=False) if payload.get('speech_timing') is not None else None,
+                json.dumps(payload, ensure_ascii=False),
+            )
+        )
+        conn.commit()
+        return metric_id
+    except sqlite3.Error as e:
+        print(f"保存交互指标失败: {e}")
         return None
     finally:
         conn.close()
