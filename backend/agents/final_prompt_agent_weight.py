@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 from langchain_core.prompts import ChatPromptTemplate
 from .llm_config import create_chat_llm
@@ -62,29 +62,25 @@ def final_prompt_agent_node(state: AgentState):
 
     # 3. System Prompt (关键修复：所有示例中的 { } 都改成了 {{ }})
     system_prompt = """
-    You are an Art Director describing a visual scene.
+    你是负责描述视觉场景的艺术指导。请把输入元素整理成英文 positive / negative prompt。
     
-    ### INPUT DATA
-    - Visual Elements: {masked_input}
-    - Context: {global_context}
-    - Style: {style}
+    ### 输入数据
+    - 视觉元素：{masked_input}
+    - 上下文：{global_context}
+    - 风格：{style}
 
-    ### CRITICAL FORMATTING RULES
-    The input format is: `visual description {{ __LOCKED_x__ }}`.
+    ### 关键格式规则
+    输入格式为：`visual description {{ __LOCKED_x__ }}`。
     
-    1. **Structure:** You MUST write a visual description sentence starting with phrases like "The image features...", "The scene displays...", or "A view of...".
-    2. **Handling Tokens:**
-       - You will see items like `museum scenes {{ __LOCKED_0__ }}`.
-       - You MUST include the ID part `{{ __LOCKED_x__ }}` in your output sentence, placed immediately after the description.
-       - **Example:** "A grand museum scenes {{ __LOCKED_0__ }} with bright lighting {{ __LOCKED_1__ }}."
-    3. **FORBIDDEN:**
-       - DO NOT write narratives like "discussing", "talking", "thinking".
-       - DO NOT treat elements as people unless the keyword says "person".
-       - These are visual tags, not characters in a story.
-    4. **Low Weights:** If you see `(key:0.x)`, convert to `{{{{opt1|opt2}}}}`. 
-       (Note: double braces used above to escape for LangChain, LLM sees single braces)
+    1. positive 必须是英文视觉描述，可以以 "The image features..."、"The scene displays..." 或 "A view of..." 开头。
+    2. 处理锁定 token：
+       - 你会看到类似 `museum scenes {{ __LOCKED_0__ }}` 的片段。
+       - 输出时必须保留 ID 部分 `{{ __LOCKED_x__ }}`，并放在对应描述后面。
+       - 示例："A grand museum scene {{ __LOCKED_0__ }} with bright lighting {{ __LOCKED_1__ }}."
+    3. 禁止写成剧情叙事，例如 discussing、talking、thinking；除非关键词明确是 person，不要把元素当成人物角色。
+    4. 如果看到低权重 `(key:0.x)`，可转换成 `{{{{opt1|opt2}}}}`。
 
-    ### OUTPUT JSON
+    ### 输出 JSON
     {{
         "positive": "The image features [Element {{ __LOCKED_x__ }}]...",
         "negative": "low quality..."
@@ -94,7 +90,7 @@ def final_prompt_agent_node(state: AgentState):
     # 4. 创建模板
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("user", "Describe the scene.")
+        ("user", "请描述场景并返回英文 positive / negative JSON。")
     ])
 
     chain = prompt | llm
@@ -143,3 +139,4 @@ def final_prompt_agent_node(state: AgentState):
 
     print(f"AGENCY: Final Prompt Output: {final_prompts['positive']}")
     return {"final_prompt": final_prompts}
+

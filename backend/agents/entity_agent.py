@@ -35,29 +35,29 @@ class EntityAgent:
         # 2. 构建 System Prompt
         # 强调：不要拆分附属物（如衣服），要提取独立、完整的视觉主体
         system_prompt = """
-        You are a Visual Entity Analyzer with priority judgment capability. Your goal is to identify distinct, complete visual subjects in the provided image, following strict priority rules.
-        
-        CORE PRIORITY RULES (MANDATORY):
-        1. Highest Priority: Living moving objects (humans, animals, birds, fish, insects, etc.) - MUST identify these first and prioritize them.
-        2. Medium Priority: Background buildings/structures (houses, bridges, roads, cars, furniture, etc.) - Identify only if they are prominent and independent.
-        3. Lowest Priority (GENERALLY EXCLUDE): Flowers, grass, trees, plants - DO NOT list these entities unless they are the absolute core subject of the image (e.g., the image is only a single tree with no other objects).
-        
-        BASIC RULES (SUPPLEMENTARY):
-        1. "Subject Completeness": If a person is wearing a dress, the entity is "woman" or "person", NOT "dress". Do not split attached accessories from the main subject.
-        2. "Semantic Guidance": Use the provided 'original_prompt' to understand user intent, but only list entities that are ACTUALLY VISIBLE in the image.
-        3. "Segmentation Ready": Return simple, clear English nouns (singular form preferred) that a segmentation model (like SAM) can easily understand (e.g., "man", "dog", "house").
-        4. "No duplication": Do not return overlapping entities like ['man', 'head', 'arm']. Just return the most comprehensive main subject (e.g., ['man']).
-        5. "Minimal List": Only return entities that meet the priority rules, avoid trivial or background elements (e.g., exclude "grass" even if visible).
+        你是具备优先级判断能力的视觉实体分析器。你的目标是在图像中识别清晰、独立、完整、适合分割的视觉主体。
 
-        Return JSON format (strictly follow, no extra text):
+        核心优先级规则（必须遵守）：
+        1. 最高优先级：有生命或会运动的对象，如人、动物、鸟、鱼、昆虫等，必须优先识别。
+        2. 中等优先级：突出的独立建筑/结构/物体，如房屋、桥、道路、汽车、家具等。
+        3. 最低优先级（通常排除）：花、草、树、植物。除非它们是画面的绝对核心主体，否则不要列出。
+
+        补充规则：
+        1. 主体完整性：如果人物穿着裙子，实体应是 "woman" 或 "person"，不要拆成 "dress"。不要把附属配件从主体上拆开。
+        2. 语义参考：可以利用 original_prompt 理解用户意图，但只能列出图像中真实可见的实体。
+        3. 适合分割：返回简单、清晰的英文名词，尽量用单数，便于 SAM 等分割模型理解，例如 "man"、"dog"、"house"。
+        4. 不要重复：不要返回重叠实体，如 ["man", "head", "arm"]；只返回最完整的主体，例如 ["man"]。
+        5. 最小列表：只返回符合优先级规则的实体，避免琐碎背景元素。
+
+        只返回如下 JSON，不要输出额外文字：
         {
-            "entities": ["entity1", "entity2", ...]
+            "entities": ["entity1", "entity2"]
         }
         """
 
         # 3. 构建消息
         content_blocks = [
-            {"type": "text", "text": f"Original Prompt used for generation: {original_prompt}"},
+            {"type": "text", "text": f"生成图像使用的原始 Prompt: {original_prompt}"},
             {
                 "type": "image_url",
                 "image_url": {"url": f"data:image/png;base64,{base64_image}"}

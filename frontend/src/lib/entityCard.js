@@ -183,7 +183,7 @@ export function updateEntityDisplay(nodeId, segmentedAssets, node) {
         img.src = fullPath;
         img.style.pointerEvents = 'none';
         // 标题保留原有格式，仅补充output标识（不影响视觉）
-        img.title = `${asset.label || `${asset.type === 'entity' ? 'entity' : 'output-image'}-${index}`} (double-click to enlarge)`;
+        img.title = `${asset.label || `${asset.type === 'entity' ? '实体' : '输出图像'}-${index}`}（双击放大）`;
         img.style.cssText = `
             width: 100%;
             height: 100%;
@@ -211,7 +211,7 @@ export function updateEntityDisplay(nodeId, segmentedAssets, node) {
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         `;
         deleteBtn.innerText = '×';
-        deleteBtn.title = `Delete ${asset.type === 'output' ? 'output' : 'entity'} image`;
+        deleteBtn.title = `删除${asset.type === 'output' ? '输出' : '实体'}图像`;
 
         // 鼠标悬停效果（完全保留你原有逻辑）
         imgWrapper.onmouseenter = () => {
@@ -229,7 +229,7 @@ export function updateEntityDisplay(nodeId, segmentedAssets, node) {
         // 删除按钮点击事件（兼容output图片，逻辑不变）
         deleteBtn.onclick = (e) => {
             e.stopPropagation();
-            const confirmDelete = window.confirm(`Delete the ${asset.type === 'output' ? 'output' : 'entity'} image "${asset.label || `${asset.type === 'entity' ? 'entity' : 'output-image'}-${index}`}"?`);
+            const confirmDelete = window.confirm(`确定删除${asset.type === 'output' ? '输出' : '实体'}图像“${asset.label || `${asset.type === 'entity' ? '实体' : '输出图像'}-${index}`}”吗？`);
             if (!confirmDelete) return;
 
             // 根据类型删除对应数组中的元素
@@ -310,7 +310,7 @@ export function updateEntityDisplay(nodeId, segmentedAssets, node) {
                     console.log(`[EntityCard] ${asset.type} image saved: ${fileName}`);
                 } catch (error) {
                     console.error('[EntityCard] Failed to save image:', error);
-                    alert('Failed to save the image. Check the image URL and your network connection.');
+                    alert('保存图像失败，请检查图像地址和网络连接。');
                 }
             };
 

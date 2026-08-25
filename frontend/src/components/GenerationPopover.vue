@@ -6,7 +6,7 @@
     <div class="modal bg-gray-50 rounded-lg shadow-xl overflow-auto p-4 w-full"
         style="max-width: 500px;">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-700">Workflow Parameters</h2>
+        <h2 class="text-xl font-semibold text-gray-700">工作流参数</h2>
         <button
           @click="onClose"
           class="text-gray-500 hover:text-gray-800 text-2xl"

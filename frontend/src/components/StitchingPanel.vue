@@ -24,7 +24,7 @@
             }
           ]"
           :style="getBufferItemStyle(clip)"
-          :title="clip.filename || clip.name || clip.nodeId || 'Buffer asset'"
+          :title="clip.filename || clip.name || clip.nodeId || '暂存素材'"
           draggable="true"
           @dragstart="handleDragStart('buffer', index, $event)"
           @dragover.prevent="onBufferDragOver(index, $event)"
@@ -70,7 +70,7 @@
           v-if="bufferClips.length === 0"
           class="buffer-placeholder"
         >
-          Your assets can be collected here…
+          素材可以先收集到这里...
         </span>
       </div>
 
@@ -148,7 +148,7 @@
             id="clips-placeholder"
             class="track-placeholder"
           >
-            Drag video / image nodes here…
+            将视频/图像节点拖到这里...
           </span>
         </div>
       </div>
@@ -180,7 +180,7 @@
               <span class="audio-clip-name">
                 {{ clip.nodeId.substring(0, 8) }}...
               </span>
-              <span class="audio-clip-duration">{{ clip.duration.toFixed(1) }}s</span>
+              <span class="audio-clip-duration">{{ Number(clip.duration || 0).toFixed(1) }}s</span>
             </div>
 
             <span class="remove-btn" @click.stop="removeAudio(index)">×</span>
@@ -197,7 +197,7 @@
             id="audio-clips-placeholder"
             class="track-placeholder"
           >
-            Drag audio nodes here…
+            将音频节点拖到这里...
           </span>
         </div>
       </div>
@@ -206,16 +206,37 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch, ref, nextTick } from 'vue'
+import { onMounted, onBeforeUnmount, watch, ref, nextTick, type PropType, type CSSProperties } from 'vue'
 import { useStitching } from '@/lib/useStitching.js'
 import WaveSurfer from 'wavesurfer.js'
 
 type WaveSurferInstance = ReturnType<typeof WaveSurfer.create>
 
+interface TimelineClip {
+  nodeId: string
+  mediaPath?: string
+  thumbnailUrl?: string
+  mediaUrl?: string
+  media_url?: string
+  audioUrl?: string
+  filename?: string
+  name?: string
+  type: 'image' | 'video' | 'audio'
+  duration: number
+  width?: number
+  height?: number
+  naturalWidth?: number
+  naturalHeight?: number
+  exportWidth?: number
+  exportHeight?: number
+  resolution?: string
+  sampleRate?: number
+}
+
 const props = defineProps({
-  clips:           { type: Array,  required: true },
-  audioClips:      { type: Array,  required: true },
-  bufferClips:     { type: Array, default: () => [] },
+  clips:           { type: Array as PropType<TimelineClip[]>,  required: true },
+  audioClips:      { type: Array as PropType<TimelineClip[]>,  required: true },
+  bufferClips:     { type: Array as PropType<TimelineClip[]>, default: () => [] },
   isStitching:     { type: Boolean, default: false },
   stitchResultUrl: { type: [String, null] }
 })
@@ -278,7 +299,7 @@ function updateBufferCardHeight() {
   bufferCardHeight.value = Math.max(40, Math.round(innerH - 4))
 }
 
-function getBufferItemStyle(clip: any) {
+function getBufferItemStyle(clip: any): CSSProperties {
   const h = bufferCardHeight.value
 
   if (clip.type === 'audio') {
@@ -484,7 +505,7 @@ const getBufferMeta = (clip: any): string => {
     if (clip.sampleRate) {
       return `${clip.sampleRate} Hz`
     }
-    return 'Audio'
+    return '音频'
   }
 
   if (clip.width && clip.height) {
@@ -499,9 +520,9 @@ const getBufferMeta = (clip: any): string => {
     return `${v.toFixed(1)} s`
   }
 
-  if (clip.type === 'image') return 'Image'
-  if (clip.type === 'video') return 'Video'
-  return 'Media'
+  if (clip.type === 'image') return '图像'
+  if (clip.type === 'video') return '视频'
+  return '媒体'
 }
 </script>
 

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 from langchain_core.prompts import ChatPromptTemplate
 from .state import AgentState
@@ -12,42 +12,34 @@ from .llm_config import create_chat_llm
 #   4) cue 可以保留自然语言标点；结构化列表是前端的首选数据源
 CUE_DECOMPOSITION_RULES = """
 
-### REWRITE AND DECOMPOSITION (mandatory, applies before you output anything)
+### 改写与线索拆解（必须先执行）
 
-Step 1 -- Rewrite.
-Do NOT copy the user's sentence into the prompt. Read it, understand what scene it asks for,
-and rewrite it completely into generation-ready visual language. Fix vague wording, supply the
-concrete visual detail the model needs, and drop conversational filler.
+步骤 1：完整改写。
+不要把用户原句原样塞进 prompt。请理解用户真正想要的画面或操作，把它改写成适合生成模型理解的英文视觉语言；补足必要的具体视觉细节，去掉口语化废话。
 
-Step 2 -- Decompose into short phrases.
-Break the rewritten description into individual cues. Each cue:
-- expresses exactly ONE idea;
-- is a short noun/adjective phrase, ideally 2-8 words, never a full sentence;
-- may contain natural punctuation when it is required to preserve the relation's meaning.
-- MUST NOT contain a colon. Colons are reserved for the weight syntax.
+步骤 2：拆成短语线索。
+把改写后的描述拆成独立 cue。每条 cue：
+- 只表达一个概念；
+- 是简短名词/形容词短语，最好 2-8 个英文词，不要写成长句；
+- 可以保留必要标点来表达关系；
+- 不能包含冒号，冒号仅用于权重格式。
 
-Step 3 -- Tag every cue with its type.
-- "relation"  : a spatial or logical link BETWEEN two or more entities, or one entity plus the
-                viewpoint. e.g. 'child in front of display case', 'orb connected to probe',
-                'camera orbiting the car', 'artifact enclosed inside the case'.
-- "entity"    : a subject or object on its own. e.g. 'child', 'display case', 'astronaut'.
-- "attribute" : a trait of ONE entity, or a global look. e.g. 'wooden case', 'warm rim light',
-                'matte metal surface', 'shallow depth of field'.
-A trait of a single object is an attribute, never a relation.
-A link between two objects is a relation, never an attribute.
+步骤 3：为每条 cue 标注类型。
+- "relation"：两个或更多实体之间的空间/逻辑关系，或一个实体与视角的关系，例如 "child in front of display case"。
+- "entity"：独立主体或物体，例如 "child"、"display case"、"astronaut"。
+- "attribute"：单个实体的特征或整体观感，例如 "wooden case"、"warm rim light"。
+单个物体的特征是 attribute，不是 relation；两个物体之间的位置或连接才是 relation。
 
-Step 4 -- Weight by importance.
-Relations carry the intent that diffusion models most often drop, so weight them highest.
-- relation cues taken from the user request : 1.4 - 1.6
-- entity cues                               : 1.2 - 1.4
-- attribute cues from the user request      : 1.1 - 1.3
-- attribute cues from context or knowledge  : 1.0 - 1.1
-Cues will be displayed to the creator sorted by weight, so the weight determines reading order.
+步骤 4：按重要性赋权。
+关系最容易被扩散模型忽略，因此权重最高。
+- 来自用户请求的 relation：1.4 - 1.6
+- entity：1.2 - 1.4
+- 来自用户请求的 attribute：1.1 - 1.3
+- 来自上下文/知识的 attribute：1.0 - 1.1
+前端会按权重排序显示，权重也决定阅读顺序。
 
-### OUTPUT CONTRACT
-Return ONLY valid JSON with these four keys. `positive` / `negative` are the flattened strings
-the generator consumes; `positive_cues` / `negative_cues` are the same content in structured
-form and MUST correspond one-to-one, in the same order.
+### 输出契约
+只返回合法 JSON，必须包含以下四个 key。`positive` / `negative` 是生成器消费的扁平字符串；`positive_cues` / `negative_cues` 是同一内容的结构化列表，顺序必须一一对应。
 
 {{
     "positive": "(cue text:1.5) | (cue text:1.2)",
@@ -66,218 +58,70 @@ form and MUST correspond one-to-one, in the same order.
 
 # A. 生图模式提示词 (用于图像生成/编辑)
 IMAGE_SYSTEM_PROMPT = """
-You are an expert Stable Diffusion/FLUX Prompt Engineer for ComfyUI.
-Your goal is to generate a list of weighted tags for image generation based on the inputs.
+你是面向 ComfyUI 的 Stable Diffusion / FLUX 专业提示词工程师。请根据输入生成适合图像生成或图像编辑的英文加权提示词。
 
-Context Inputs:
-- Global Context (Base): {global_context}
-- Local Instruction (Edit): {user_input}
-- Visual Style: {style}
-- Entity Knowledge: {knowledge}
-- Entities (subjects present): {entities}
-- Attributes (traits of a single entity): {attributes}
-- Relations (links BETWEEN entities): {relations}
+上下文输入：
+- 全局上下文：{global_context}
+- 本次局部指令：{user_input}
+- 视觉风格：{style}
+- 知识补充：{knowledge}
+- 实体：{entities}
+- 属性：{attributes}
+- 关系：{relations}
 
-Handling of Relations:
-Relations describe how entities stand with respect to one another -- position, containment,
-occlusion, viewing direction, connection. They are the most fragile part of the request and
-the easiest for a diffusion model to drop.
-- Emit EVERY listed relation as its own phrase. Do not merge two relations into one phrase.
-- Do not silently replace a relation with an attribute of a single entity.
-- Place relation phrases immediately after the main subject phrases, before lighting and style.
-- For each relation, add the corresponding failure mode to the negative prompt
-  (e.g. relation 'A in front of B' -> negative 'A behind B, A and B overlapping incorrectly').
+处理重点：
+1. 用户本次输入优先级最高，其次是全局上下文，再其次是知识补充。
+2. relations 表示实体之间的位置、包含、遮挡、连接、视线或镜头关系，必须逐条保留为独立英文短语，不要合并或改写成单个实体属性。
+3. 如果用户要求保持、保留、不变、不要改变等，必须在 positive 中显式加入英文 preservation cues，例如 "preserve original face"、"preserve original pose"、"keep object in the same position"。
+4. negative 中加入对应失败模式，例如 changed identity、changed pose、wrong spatial relation、blurry、bad anatomy。
+5. 最终 prompt 内容必须是英文，便于下游图像模型处理；但你可以用中文理解输入。
+6. 总长度控制在 512 tokens 内。
 
-Core Principles for Image Prompt Engineering:
-1. **Precision First**
-   - Use specific descriptions instead of vague terms
-   - Clearly specify colors, styles, actions, and other details
-   - Avoid subjective expressions like "make it look better"
-   - Maximum prompt limit: 512 tokens
-   - IMPORTANT: All prompts must be generated in English
-
-2. **Consistency Maintenance**
-   - Explicitly specify elements that should remain unchanged
-   - Use phrases like "while maintaining..." to protect important features
-   - Avoid accidentally changing elements users don't want modified
-
-3. **Step-by-Step Processing**
-   - Break complex modifications into multiple steps
-   - Focus on one major change per edit
-   - Utilize iterative editing capabilities
-
-Prompt Structure Guidelines:
-- Basic object modification: "Change the [specific object]'s [specific attribute] to [specific value]"
-- Style conversion: "Convert to [specific style] while maintaining [elements to preserve]"
-- Background/environment change: "Change the background to [new environment] while keeping the [subject] in the exact same position, scale, and pose"
-- Character consistency: "[Action/change description] while preserving [character's] exact facial features, [specific characteristics]"
-
-Instructions for Weighted Tag Generation:
-1. **Context Fusion:** Merge User Input > Global Context > Knowledge.
-2. **Weighting Logic:**
-   - High (1.3-1.6) for User Input keywords.
-   - Standard (1.0-1.2) for Global Context/Knowledge.
-   - Format: `(keyword:weight)`.
-3. **Formatting Rules:**
-   - **Positive:** Comma-separated phrases (≤5 words each). Focus on lighting, texture, composition.
-   - **Negative:** Standard quality artifacts (e.g., "bad anatomy, blurry").
-   - Output ONLY valid JSON.
-
-**Example Output:**
-{{
-    "positive": "(scholar holding the teacup:1.5), (Song Dynasty scholar:1.3), (celadon teacup:1.2), (warm glaze:1.1), (soft natural light:1.0)",
-    "negative": "(teacup floating away from hand:1.3), (bad anatomy:1.2), (blurry:1.3)",
-    "positive_cues": [
-        {{"text": "scholar holding the teacup", "weight": 1.5, "type": "relation"}},
-        {{"text": "Song Dynasty scholar", "weight": 1.3, "type": "entity"}},
-        {{"text": "celadon teacup", "weight": 1.2, "type": "entity"}},
-        {{"text": "warm glaze", "weight": 1.1, "type": "attribute"}},
-        {{"text": "soft natural light", "weight": 1.0, "type": "attribute"}}
-    ],
-    "negative_cues": [
-        {{"text": "teacup floating away from hand", "weight": 1.3, "type": "relation"}},
-        {{"text": "bad anatomy", "weight": 1.2, "type": "attribute"}},
-        {{"text": "blurry", "weight": 1.3, "type": "attribute"}}
-    ]
-}}
+输出格式：只返回 JSON，包含 positive、negative、positive_cues、negative_cues。
 """ + CUE_DECOMPOSITION_RULES
 
 # B. 生视频模式提示词 (用于视频生成)
 VIDEO_SYSTEM_PROMPT = """
-You are an expert AI Video Prompt Engineer for video generation models.
-Your goal is to generate a list of weighted tags for video generation based on the inputs.
+你是 AI 视频生成模型的专业提示词工程师。请根据输入生成适合文生视频、图生视频、镜头控制或补帧工作流的英文加权提示词。
 
-Context Inputs:
-- Global Context (Base): {global_context}
-- Local Instruction (Edit): {user_input}
-- Visual Style: {style}
-- Entity Knowledge: {knowledge}
-- Entities (subjects present): {entities}
-- Attributes (traits of a single entity): {attributes}
-- Relations (links BETWEEN entities): {relations}
+上下文输入：
+- 全局上下文：{global_context}
+- 本次局部指令：{user_input}
+- 视觉风格：{style}
+- 知识补充：{knowledge}
+- 实体：{entities}
+- 属性：{attributes}
+- 关系：{relations}
 
-Handling of Relations:
-Relations describe how entities stand with respect to one another. Across a video they must
-hold for the whole clip, not only in the first frame.
-- Emit every listed relation as its own phrase, and where sensible state that it is maintained
-  throughout the motion (e.g. '(child stays in front of the display case throughout:1.4)').
-- Add the corresponding failure mode to the negative prompt
-  (e.g. 'subjects drifting apart, relative position changing mid-shot').
+处理重点：
+1. 视频 prompt 要优先表达主体、场景、动作、镜头运动、运动质量、构图、灯光和风格。
+2. relations 必须在整个视频片段中保持，而不只是第一帧成立；可写成 "subject stays in front of object throughout" 这类英文短语。
+3. 图生视频/镜头控制默认保留原图主体身份、构图、位置、尺度、灯光方向和场景，除非用户明确要求改变。
+4. 如果用户要求保持不变，positive 必须加入明确 preservation cues，negative 加入相反风险，如 identity drift、relative position changing、scene drift。
+5. 最终 prompt 内容必须是英文；输出只允许 JSON。
 
-Core Principles for Video Prompt Engineering:
-1. **Basic Formula (For New Users)**
-   Simple, open-ended prompts generate imaginative videos:
-   Theme + Scene + Action
-   - Theme: Main focus (person, animal, object, imaginary entity)
-   - Scene: Environment including background and foreground
-   - Action: Specific movement from static to dynamic
-
-2. **Advanced Formula (For Experienced Users)**
-   Add detailed descriptions to enhance video quality:
-   Theme (description) + Scene (description) + Action (description) + Aesthetic Control + Stylization
-   - Theme description: Adjectives for appearance details
-   - Scene description: Environmental details with descriptive phrases
-   - Action description: Movement characteristics including speed and effects
-   - Aesthetic control: Cinematic elements (lighting, composition, camera angle)
-   - Stylization: Visual style of the scene
-
-3. **Image-to-Video Formula**
-   Focus on movement since theme/scene exist in static image:
-   Action description + Camera movement
-   - Action description: How elements should move
-   - Camera movement: Control camera motion or keep static
-
-4. **Cinematic Controls**
-   - Light sources: Sunlight, artificial light, moonlight, practical light, fire, fluorescent, overcast, mixed light
-   - Lighting types: Soft light, hard light, top light, side light, rim light, contour light, low/high contrast
-   - Time of day: Sunrise, night, dusk, sunset, dawn
-   - Shot sizes: Extreme close-up, close-up, medium close-up, medium shot, medium wide shot, wide shot, establishing shot
-   - Composition: Center, balanced, left/right weighted, symmetrical, short side
-   - Camera angles: Over-the-shoulder, high angle, low angle, Dutch angle, aerial shot, eye level
-   - Shot types: Clean single shot, two-shot, three-shot, group shot, establishing shot
-   - Color tones: Warm, cool, saturated, desaturated
-
-5. **Dynamic Controls**
-   - Action types: Street dance, running, football, basketball, skateboarding, etc.
-   - Character emotions: Anger, fear, joy, sadness, surprise
-   - Camera movements: Push in, pull back, pan, tilt, handheld, tracking shot, arc shot, composite movement
-
-6. **Stylization Options**
-   - Visual styles: Felt, 3D cartoon, pixel art, puppet animation, clay animation, 2D anime, watercolor, oil painting
-   - Visual effects: Tilt-shift photography, time-lapse photography
-
-Professional Tips:
-- Start with basic formula and gradually increase complexity
-- Be specific but not overly restrictive - let AI be creative
-- Try different combinations of aesthetic controls
-- For image-to-video, focus on natural movements matching the image
-- Use stylization to create unique artistic effects
-
-Instructions for Weighted Tag Generation:
-1. **Context Fusion:** Merge User Input > Global Context > Knowledge.
-2. **Weighting Logic (Video-Specific):**
-   - High (1.3-1.6) for User Input keywords (especially action/movement/camera control).
-   - Standard (1.0-1.2) for Global Context/Knowledge (scene/aesthetic elements).
-   - For ImageToVideo: Higher weight (1.4-1.7) for camera movement and action descriptions.
-   - For Frame manipulation: Higher weight (1.5-1.8) for frame rate and smoothness terms.
-   - Format: `(keyword:weight)`.
-3. **Formatting Rules:**
-   - **Positive:** Comma-separated phrases (≤5 words each). Focus on movement, camera, lighting, style, frame control. Emphasizing that style is photographic. The atmosphere is warm and reserved.
-   - **Negative:** Video-specific quality artifacts (e.g., "jerky motion, low frame rate, frame stutter").
-   - Output ONLY valid JSON.
-
-**Example Output (Text to Video):**
-{{
-    "positive": "(golden retriever:1.5), (sunny park:1.2), (playing frisbee:1.4), (soft sunlight:1.1), (medium shot:1.0), (joyful emotion:1.2)",
-    "negative": "(jerky motion:1.3), (low frame rate:1.4), (blurry movement:1.2)"
-}}
-
-**Example Output (Image to Video):**
-{{
-    "positive": "(camera orbiting around the car:1.6), (car stays centered in frame:1.5), (slow smooth movement:1.4), (soft moonlight:1.1)",
-    "negative": "(car drifting out of frame:1.4), (frame stutter:1.5), (jerky camera:1.4)",
-    "positive_cues": [
-        {{"text": "camera orbiting around the car", "weight": 1.6, "type": "relation"}},
-        {{"text": "car stays centered in frame", "weight": 1.5, "type": "relation"}},
-        {{"text": "slow smooth movement", "weight": 1.4, "type": "attribute"}},
-        {{"text": "soft moonlight", "weight": 1.1, "type": "attribute"}}
-    ],
-    "negative_cues": [
-        {{"text": "car drifting out of frame", "weight": 1.4, "type": "relation"}},
-        {{"text": "frame stutter", "weight": 1.5, "type": "attribute"}},
-        {{"text": "jerky camera", "weight": 1.4, "type": "attribute"}}
-    ]
-}}
+输出格式：只返回 JSON，包含 positive、negative、positive_cues、negative_cues。
 """ + CUE_DECOMPOSITION_RULES
 
 # C. 音频模式提示词 (用于生旁白/TTS)
 AUDIO_SYSTEM_PROMPT = """
-You are an expert music director for AI background music generation.
-Your goal is to create a suitable, immersive background music description based on the inputs.
+你是 AI 背景音乐生成的音乐指导。请根据场景、风格和用户要求，写出自然、沉浸的英文音乐描述。
 
-Context Inputs:
-- Scene Context: {global_context}
-- Specific Request: {user_input}
-- Mood/Style: {style}
-- Detailed Info: {knowledge}
-- Entities (subjects present): {entities}
-- Attributes (traits of a single entity): {attributes}
-- Relations (links BETWEEN entities): {relations}
+上下文输入：
+- 场景上下文：{global_context}
+- 用户要求：{user_input}
+- 情绪/风格：{style}
+- 知识补充：{knowledge}
+- 实体：{entities}
+- 属性：{attributes}
+- 关系：{relations}
 
-Instructions:
-1. **Goal:** Compose a natural, vivid music description that matches the scene atmosphere and emotional tone.
-2. Use the relations to infer the emotional register of the scene (proximity, confrontation,
-   observation, isolation). Do not name the entities or relations literally in the output.
-3. **Formatting Rules:**
-   - **text:** Smooth, descriptive English sentences for background music.
-   - **NO weighting syntax** (e.g., NO `(word:1.2)`).
-   - **NO lists of keywords**. Write in a continuous, atmospheric style.
-   - Output ONLY valid JSON.
-
-**Example Output:**
-{{
-    "text": "Soft, ethereal ambient music with gentle piano notes and distant wind chimes, creating a calm and mysterious atmosphere."
-}}
+要求：
+1. 只描述音乐，不直接描述画面；从画面关系中推断情绪、节奏、乐器、质感和强度。
+2. 不写歌词、旁白、对话或音效，除非用户明确要求。
+3. 不使用权重语法，不输出关键词列表。
+4. 最终内容必须是英文自然句。
+5. 只返回 JSON：{{ "text": "one or two smooth English sentences for background music" }}
 """
 
 # 定义视频工作流名称常量（便于维护）
@@ -493,3 +337,4 @@ def prompt_agent_node(state: AgentState):
     print(f"AGENCY: Prompt Agent Generated: {final_prompts}")
 
     return {"final_prompt": final_prompts}
+

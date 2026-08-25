@@ -12,6 +12,13 @@ export type CardType =
   | 'AddWorkflow'
   | 'TextImage'
 
+export interface AssetMedia {
+  rawPath: string
+  url: string
+  type: 'image' | 'video' | 'audio'
+  source: 'input' | 'output'
+}
+
 // D3 实际使用的节点结构 = AppNode + UI 元数据
 export interface ViewNode extends AppNode {
   cardType: CardType
@@ -77,19 +84,19 @@ function inferCardType(node: AppNode): CardType {
 // 构造显示标题（现在先用 module_id 占位）
 function buildTitle(node: AppNode): string {
   if (node.isComposite) {
-    return node.label || `Group (${node.combinedNodes?.length || 0})`
+    return node.label || `组合（${node.combinedNodes?.length || 0}）`
   }
 
   if (!node.originalParents || node.originalParents.length === 0) {
-    return 'Init'
+    return '开始'
   }
 
   if (node.module_id === 'AddText') {
-    return 'Intent Draft'
+    return '意图草稿'
   }
 
   if (node.module_id === 'AddWorkflow' || node.module_id?.startsWith('AddWorkflow')) {
-    return 'Workflow Planning'
+    return '工作流规划'
   }
 
   return node.module_id

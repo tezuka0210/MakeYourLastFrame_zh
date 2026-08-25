@@ -3,7 +3,7 @@
     <!-- Top Title Bar -->
     <header class="title-bar">
       <div class="title-main">
-        <h1>Make Your Final Frame: Re-Authoring Visual Assets for Iterative Keyframe Creation</h1>
+        <h1>Make Your Final Frame：面向迭代关键帧创作的视觉资产再编辑系统</h1>
       </div>
     </header>
 
@@ -19,7 +19,7 @@
                 class="drawer-toggle"
                 :class="{ open: isLeftPaneOpen }"
                 @click="isLeftPaneOpen = !isLeftPaneOpen"
-                :title="isLeftPaneOpen ? 'Collapse left panel' : 'Expand left panel'"
+                :title="isLeftPaneOpen ? '收起左侧面板' : '展开左侧面板'"
               >
                 <svg viewBox="0 0 24 24" class="drawer-icon">
                   <path
@@ -64,7 +64,7 @@
           <!-- Vertical Splitter -->
           <div
             class="splitter splitter-vertical"
-            title="Drag to resize left and right panels"
+            title="拖动调整左右面板宽度"
             @mousedown="startVerticalResize"
           >
             <span class="splitter-line"></span>
@@ -82,7 +82,7 @@
       <!-- Horizontal Splitter -->
       <div
         class="splitter splitter-horizontal"
-        title="Drag to resize top and bottom panels"
+        title="拖动调整上下区域高度"
         @mousedown="startHorizontalResize"
       >
         <span class="splitter-line"></span>
@@ -95,7 +95,7 @@
             <button
               class="icon-btn stitch-floating-btn"
               :disabled="isStitching"
-              title="Stitch video"
+              title="拼接视频"
               @click="onStitchRequest"
             >
               <svg viewBox="0 0 24 24" class="icon-svg" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -352,7 +352,7 @@ function handleOpenGenerationPopover(
     if (selectedParentIds.value.length < 2) {
       selectedParentIds.value = [...selectedParentIds.value, node.id]
     } else {
-      alert('Max 2 parents selected. Opening popover with current selection.')
+      alert('最多只能选择 2 个父节点。将使用当前选择打开生成面板。')
     }
   }
 

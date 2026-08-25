@@ -1,8 +1,78 @@
-import json
+﻿import json
+import re
 from langchain_core.prompts import ChatPromptTemplate
 from .state import AgentState
 from .llm_config import create_chat_llm
 from .prompt_agent import _normalize_cue_list, _serialize_cues
+
+PRESERVATION_KEYWORDS = (
+    "keep", "preserve", "retain", "maintain", "unchanged", "same", "original",
+    "do not change", "don't change", "without changing",
+    "保持", "保留", "不变", "不要改变", "不能改变", "不修改", "不移动", "原样"
+)
+
+PRESERVATION_DEFAULT_CUES = [
+    "preserve original subject identity",
+    "preserve original face",
+    "preserve original clothing",
+    "preserve original pose",
+    "preserve original position",
+    "preserve original scale",
+    "preserve original composition",
+    "preserve original camera angle",
+    "preserve original lighting direction",
+]
+
+PRESERVATION_NEGATIVE_CUES = [
+    "changed identity",
+    "changed face",
+    "changed clothing",
+    "changed pose",
+    "changed position",
+    "changed scale",
+    "changed composition",
+    "changed camera angle",
+    "inconsistent lighting",
+    "subject drift",
+]
+
+
+def _contains_preservation_request(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(keyword in lowered for keyword in PRESERVATION_KEYWORDS)
+
+
+def _append_unique_cue(cues, text: str, weight: float, cue_type: str = "relation"):
+    key = text.strip().lower()
+    if not key:
+        return
+    for cue in cues:
+        if str(cue.get("text", "")).strip().lower() == key:
+            cue["weight"] = max(float(cue.get("weight", 1.0)), weight)
+            cue["type"] = cue.get("type") or cue_type
+            return
+    cues.append({"text": text, "weight": weight, "type": cue_type})
+
+
+def _reinforce_preservation_cues(final_prompts: dict, user_input: str) -> dict:
+    if not _contains_preservation_request(user_input):
+        return final_prompts
+
+    positive_cues = list(final_prompts.get("positive_cues") or [])
+    negative_cues = list(final_prompts.get("negative_cues") or [])
+
+    for cue in PRESERVATION_DEFAULT_CUES:
+        _append_unique_cue(positive_cues, cue, 1.6, "relation")
+    for cue in PRESERVATION_NEGATIVE_CUES:
+        _append_unique_cue(negative_cues, cue, 1.4, "attribute")
+
+    positive_cues.sort(key=lambda c: c["weight"], reverse=True)
+    negative_cues.sort(key=lambda c: c["weight"], reverse=True)
+    final_prompts["positive_cues"] = positive_cues
+    final_prompts["negative_cues"] = negative_cues
+    final_prompts["positive"] = _serialize_cues(positive_cues)
+    final_prompts["negative"] = _serialize_cues(negative_cues)
+    return final_prompts
 
 def final_prompt_agent_node(state: AgentState):
     print("--- Running Prompt Agent (Plain Text Mode) ---")
@@ -32,32 +102,31 @@ def final_prompt_agent_node(state: AgentState):
 
     # 3. System Prompt (移除权重相关逻辑，仅保留纯文本描述规则)
     system_prompt = """
-    You are an Art Director describing a visual scene.
+    你是负责描述视觉场景的艺术指导。请把输入内容整理成适合图像/视频生成模型使用的英文 positive / negative prompt。
     
-    ### INPUT DATA
-    - Visual Elements: {masked_input}
-    - Context: {global_context}
-    - Style: {style}
+    ### 输入数据
+    - 视觉元素：{masked_input}
+    - 上下文：{global_context}
+    - 风格：{style}
 
-    ### CRITICAL FORMATTING RULES
-    1. **Structure:** You MUST write a visual description sentence starting with phrases like "The image features...", "The scene displays...", or "A view of...".
-    2. **Content:** You MUST use all the visual elements provided in {masked_input} exactly as they are, without modifying any words or adding/removing any vocabulary.
-    3. **FORBIDDEN:**
-       - DO NOT write narratives like "discussing", "talking", "thinking".
-       - DO NOT treat elements as people unless the keyword says "person".
-       - These are visual tags, not characters in a story.
+    ### 关键格式规则
+    1. positive 必须是英文视觉描述，可以以 "The image features..."、"The scene displays..." 或 "A view of..." 这类表达开头。
+    2. 必须完整保留 {masked_input} 中的视觉元素，不要丢词、改词或凭空增删核心对象。
+    3. 如果输入包含 keep、preserve、retain、unchanged、same、original、do not change、保持、保留、不变、不移动等含义，必须视为最高优先级编辑约束。positive 里要明确写出需要保持不变的主体身份、脸、服装、姿态、位置、尺度、构图、镜头角度和光照方向。
+    4. 图生图/上传图编辑时，源图是视觉锚点。不要省略 "person unchanged"、"position unchanged"、"keep objects in the same place"、"keep the scene unchanged" 这类约束，要改写成具体 preservation phrases。
+    5. 禁止写成剧情叙事，例如 discussing、talking、thinking；除非关键词明确是 person，不要把元素当成人物角色。
 
-    ### OUTPUT JSON
+    ### 输出 JSON
     {{
-        "positive": "The image features [all input elements exactly as provided]...",
-        "negative": "low quality..."
+        "positive": "The image features [all input elements], preserve original subject identity, preserve original pose, preserve original position...",
+        "negative": "low quality, changed identity, changed pose, changed position..."
     }}
     """
 
     # 4. 创建模板
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("user", "Describe the scene using the provided visual elements exactly as they are.")
+        ("user", "请使用给定视觉元素生成英文 positive / negative prompt，并严格返回 JSON。")
     ])
 
     chain = prompt | llm
@@ -102,6 +171,9 @@ def final_prompt_agent_node(state: AgentState):
     if final_prompts["negative_cues"]:
         final_prompts["negative"] = _serialize_cues(final_prompts["negative_cues"])
 
+    final_prompts = _reinforce_preservation_cues(final_prompts, user_input)
+
     print(f"AGENCY: Final Prompt Output: {final_prompts['positive']}")
     print(f"AGENCY: Preserved {len(final_prompts['positive_cues'])} user-edited cues")
     return {"final_prompt": final_prompts}
+

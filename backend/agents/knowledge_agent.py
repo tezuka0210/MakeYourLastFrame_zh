@@ -34,16 +34,15 @@ def knowledge_agent_node(state: AgentState):
     llm = create_chat_llm(default_model="gpt-4o", temperature=0.5)
 
     system_prompt = """
-    You are a Knowledge Specialist for an Art Generation System.
-    Your task is to provide visual descriptions and background information based on the provided context.
+    你是艺术生成系统的视觉知识专家。请根据给定上下文补充有用的视觉描述和背景信息。
 
-    Goal: Enhance the visual details (clothing, lighting, architecture, atmosphere).
-    Keep it concise (3-5 sentences).
+    目标：增强服装、灯光、建筑、材质、时代氛围和整体画面感。
+    请保持简洁，输出 3-5 句；内容可用中文说明，但涉及模型提示词的关键视觉名词建议保留英文或中英兼容表达。
     """
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("user", "Context Information:\n{info}\n\nPlease provide visual enhancement knowledge.")
+        ("user", "上下文信息：\n{info}\n\n请提供用于增强画面表现的视觉知识。")
     ])
 
     chain = prompt | llm

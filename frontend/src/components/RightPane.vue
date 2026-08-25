@@ -9,8 +9,8 @@
           <button
             id="tool-select-btn"
             :class="['toolbar-btn', { 'is-tool-active': activeTool === 'select' }]"
-            title="Select"
-            aria-label="Select"
+            title="选择"
+            aria-label="选择"
             :aria-pressed="activeTool === 'select'"
             @click="setActiveTool('select')"
           >
@@ -22,8 +22,8 @@
           <button
             id="tool-region-btn"
             :class="['toolbar-btn', { 'is-tool-active': activeTool === 'region' }]"
-            title="Region"
-            aria-label="Region"
+            title="取景框"
+            aria-label="取景框"
             :aria-pressed="activeTool === 'region'"
             @click="setActiveTool('region')"
           >
@@ -36,8 +36,8 @@
           <button
             id="tool-paint-btn"
             :class="['toolbar-btn', { 'is-tool-active': activeTool === 'paint' }]"
-            title="Paint Mask"
-            aria-label="Paint Mask"
+            title="绘制蒙版"
+            aria-label="绘制蒙版"
             :aria-pressed="activeTool === 'paint'"
             @click="setActiveTool('paint')"
           >
@@ -64,8 +64,8 @@
           <button
             id="collect-buffer-btn"
             class="toolbar-btn"
-            title="Add to Buffer"
-            aria-label="Add to Buffer"
+            title="加入素材暂存区"
+            aria-label="加入素材暂存区"
           >
             <svg viewBox="0 0 24 24" class="toolbar-icon" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M4 7h16" />
@@ -79,8 +79,8 @@
           <button
             id="export-mask-btn"
             class="toolbar-btn"
-            title="Export Mask"
-            aria-label="Export Mask"
+            title="导出蒙版"
+            aria-label="导出蒙版"
           >
             <svg viewBox="0 0 24 24" class="toolbar-icon" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M4 12c3-5 13-5 16 0-3 5-13 5-16 0z" />
@@ -91,8 +91,8 @@
           <button
             id="export-composite-btn"
             class="toolbar-btn"
-            title="Export Composite"
-            aria-label="Export Composite"
+            title="导出合成图"
+            aria-label="导出合成图"
           >
             <svg viewBox="0 0 24 24" class="toolbar-icon" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="4" y="5" width="10" height="10" rx="2" />
@@ -105,8 +105,8 @@
           <button
             id="clear-canvas-btn"
             class="toolbar-btn toolbar-btn--danger"
-            title="Clear Canvas"
-            aria-label="Clear Canvas"
+            title="清空画布"
+            aria-label="清空画布"
           >
             <svg viewBox="0 0 24 24" class="toolbar-icon" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M4 7h16" />

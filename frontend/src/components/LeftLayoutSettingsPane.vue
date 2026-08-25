@@ -3,14 +3,14 @@
     <section class="settings-card">
       <header class="settings-header">
         <div class="header-row">
-          <h2 class="header-title">Layout &amp; Colors</h2>
-          <button class="apply-btn" @click="applySettings">Apply</button>
+          <h2 class="header-title">布局与颜色</h2>
+          <button class="apply-btn" @click="applySettings">应用</button>
         </div>
       </header>
 
       <div class="settings-content">
         <div class="layout-row">
-          <label class="row-label">Horizontal</label>
+          <label class="row-label">横向间距</label>
           <input
             type="range"
             min="40"
@@ -31,7 +31,7 @@
         </div>
 
         <div class="layout-row">
-          <label class="row-label">Vertical</label>
+          <label class="row-label">纵向间距</label>
           <input
             type="range"
             min="60"
@@ -52,28 +52,28 @@
         </div>
 
         <div class="color-row">
-          <span class="row-label">Image Node</span>
+          <span class="row-label">图像节点</span>
           <div class="picker-wrap">
             <input type="color" v-model="imageColor" class="color-input" />
           </div>
         </div>
 
         <div class="color-row">
-          <span class="row-label">Video Node</span>
+          <span class="row-label">视频节点</span>
           <div class="picker-wrap">
             <input type="color" v-model="videoColor" class="color-input" />
           </div>
         </div>
 
         <div class="color-row">
-          <span class="row-label">Audio Node</span>
+          <span class="row-label">音频节点</span>
           <div class="picker-wrap">
             <input type="color" v-model="audioColor" class="color-input" />
           </div>
         </div>
 
         <div class="color-row">
-          <span class="row-label">Merged Node</span>
+          <span class="row-label">合并节点</span>
           <div class="picker-wrap">
             <input type="color" v-model="overlapColor" class="color-input" />
           </div>
@@ -123,7 +123,7 @@ function makeSoftColor(hex: string, factor = 0.45): string {
   const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim())
   if (!m) return hex
 
-  const raw = m[1]
+  const raw = m[1] ?? ''
   const r = parseInt(raw.slice(0, 2), 16)
   const g = parseInt(raw.slice(2, 4), 16)
   const b = parseInt(raw.slice(4, 6), 16)

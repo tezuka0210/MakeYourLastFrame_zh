@@ -3,12 +3,12 @@
     <section class="session-card">
       <div class="card-header">
         <div class="header-row">
-          <h2 class="header-title">Projects</h2>
+          <h2 class="header-title">项目</h2>
           <button
             @click="createNewSession"
             type="button"
             class="new-project-btn"
-            title="New Project"
+            title="新建项目"
           >
             <svg class="new-project-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"></path>
@@ -19,7 +19,7 @@
 
       <div class="session-list">
         <div class="empty-state" v-if="sessions.length === 0">
-          <p class="empty-title">No projects yet</p>
+          <p class="empty-title">暂无项目</p>
         </div>
 
         <button
@@ -34,7 +34,7 @@
           <span
             class="delete-btn"
             @click.stop="deleteSession(session.id)"
-            title="Delete project"
+            title="删除项目"
           >
             <svg class="delete-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -55,10 +55,10 @@ interface Session {
 }
 
 const sessions = ref<Session[]>([
-  { id: 1, title: 'New Session' },
-  { id: 2, title: 'Stage play' },
-  { id: 3, title: 'On the moon' },
-  { id: 4, title: 'A leisurely afternoon' }
+  { id: 1, title: '新建项目' },
+  { id: 2, title: '舞台剧' },
+  { id: 3, title: '月球上' },
+  { id: 4, title: '悠闲的下午' }
 ])
 
 const currentSessionId = ref<number>(1)
@@ -69,7 +69,7 @@ function selectSession(id: number) {
 
 function createNewSession() {
   const newId = Date.now()
-  sessions.value.unshift({ id: newId, title: 'New Session' })
+  sessions.value.unshift({ id: newId, title: '新建项目' })
   currentSessionId.value = newId
 
   setTimeout(() => {
@@ -85,7 +85,7 @@ function deleteSession(id: number) {
 
   sessions.value.splice(index, 1)
   if (currentSessionId.value === id && sessions.value.length > 0) {
-    currentSessionId.value = sessions.value[0].id
+    currentSessionId.value = sessions.value[0]?.id ?? currentSessionId.value
   }
 }
 </script>

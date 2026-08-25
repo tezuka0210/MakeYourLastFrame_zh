@@ -1,4 +1,4 @@
-export function initCanvasDrag() {
+﻿export function initCanvasDrag() {
   const drawingBoard = document.getElementById('drawing-board');
   if (!drawingBoard) return;
   if (drawingBoard.dataset.canvasDragReady === '1') return;
@@ -1117,7 +1117,7 @@ export function initCanvasDrag() {
     `;
 
     const title = document.createElement('div');
-    title.textContent = kind === 'paint' ? 'Paint Settings' : 'Region Color';
+    title.textContent = kind === 'paint' ? '画笔设置' : '取景框颜色';
     title.style.cssText = `
       font-size: 12px;
       font-weight: 700;
@@ -1551,7 +1551,7 @@ export function initCanvasDrag() {
 
     valueEl.textContent = String(brushSize);
     indicator.setAttribute('aria-valuenow', String(brushSize));
-    indicator.setAttribute('title', `Brush size: ${brushSize}`);
+    indicator.setAttribute('title', `画笔大小：${brushSize}`);
 
     const previewSize = clamp(brushSize, 6, 16);
     dotEl.style.width = `${previewSize}px`;
@@ -1591,8 +1591,8 @@ export function initCanvasDrag() {
     btn.type = 'button';
     btn.className = 'canvas-delete-btn';
     btn.textContent = '×';
-    btn.title = 'Delete';
-    btn.setAttribute('aria-label', 'Delete');
+    btn.title = '删除';
+    btn.setAttribute('aria-label', '删除');
 
     btn.style.cssText = `
       position:absolute;
@@ -1783,7 +1783,7 @@ export function initCanvasDrag() {
       ev.preventDefault();
       ev.stopPropagation();
       selectItem(item);
-      const text = prompt('Enter item label', item.label || '');
+      const text = prompt('输入素材标签', item.label || '');
       if (text !== null) {
         setItemLabel(item, text);
       }
@@ -2041,12 +2041,12 @@ export function initCanvasDrag() {
       transform-origin:top left;
       will-change:transform;
     `;
-    labelEl.title = 'Double-click to rename. Right-click for more actions.';
+    labelEl.title = '双击重命名，右键查看更多操作。';
     drawingScene.appendChild(labelEl);
 
     const group = {
       id,
-      name: name || `Group ${groups.length + 1}`,
+      name: name || `组合 ${groups.length + 1}`,
       memberIds: members.map(it => it.id),
       frameEl,
       labelEl
@@ -2129,7 +2129,7 @@ export function initCanvasDrag() {
 
   function renameGroup(group) {
     if (!group) return;
-    const next = window.prompt('Name this group (e.g. "Girl and Butterfly")', group.name);
+    const next = window.prompt('为这个组合命名（例如“女孩和蝴蝶”）', group.name);
     if (next === null) return;
     group.name = next.trim() || group.name;
     refreshGroupVisual(group);
@@ -2196,13 +2196,13 @@ export function initCanvasDrag() {
     if (groupMenu) return;
 
     groupMenu = buildStyledMenu('canvas-group-menu', [
-      { key: 'rename', label: 'Rename Group' },
+      { key: 'rename', label: '重命名组合' },
       { key: 'sep' },
-      { key: 'scale-up', label: 'Scale Up (keep layout)' },
-      { key: 'scale-down', label: 'Scale Down (keep layout)' },
+      { key: 'scale-up', label: '放大（保持布局）' },
+      { key: 'scale-down', label: '缩小（保持布局）' },
       { key: 'sep2' },
-      { key: 'ungroup', label: 'Ungroup (keep assets)' },
-      { key: 'delete', label: 'Delete Group and Assets', danger: true }
+      { key: 'ungroup', label: '取消组合（保留素材）' },
+      { key: 'delete', label: '删除组合和素材', danger: true }
     ], action => {
       if (!groupMenuTarget) return;
       handleGroupAction(groupMenuTarget, action);
@@ -2787,7 +2787,7 @@ export function initCanvasDrag() {
     overlay.style.top = `${best.top}px`;
     overlay.style.width = `${best.w}px`;
     overlay.style.height = `${best.h}px`;
-    overlay.firstElementChild.textContent = `${percentage.toFixed(1)}% overlap`;
+    overlay.firstElementChild.textContent = `重叠 ${percentage.toFixed(1)}%`;
   }
 
   // 按给定方向复制一个同尺寸同比例的取景框，overlap 为与原框的重叠比例（0~0.9）。
@@ -2861,16 +2861,16 @@ export function initCanvasDrag() {
     if (regionMenu) return;
 
     regionMenu = buildStyledMenu('canvas-region-menu', [
-      { key: 'dup-right-0',  label: 'Duplicate Right \u2014 no overlap' },
-      { key: 'dup-down-0',   label: 'Duplicate Down \u2014 no overlap' },
-      { key: 'dup-right-30', label: 'Duplicate Right \u2014 30% overlap' },
-      { key: 'dup-down-30',  label: 'Duplicate Down \u2014 30% overlap' },
+      { key: 'dup-right-0',  label: '向右复制 - 不重叠' },
+      { key: 'dup-down-0',   label: '向下复制 - 不重叠' },
+      { key: 'dup-right-30', label: '向右复制 - 重叠 30%' },
+      { key: 'dup-down-30',  label: '向下复制 - 重叠 30%' },
       { key: 'sep' },
-      { key: 'push-in',      label: 'Push In (tighter shot)' },
-      { key: 'pull-out',     label: 'Pull Out (wider shot)' },
-      { key: 'match-first',  label: 'Match Size to First Viewport' },
+      { key: 'push-in',      label: '推近（更紧的镜头）' },
+      { key: 'pull-out',     label: '拉远（更宽的镜头）' },
+      { key: 'match-first',  label: '匹配第一个取景框尺寸' },
       { key: 'sep2' },
-      { key: 'delete',       label: 'Delete Viewport', danger: true }
+      { key: 'delete',       label: '删除取景框', danger: true }
     ], action => {
       if (!regionMenuTarget) return;
       handleRegionAction(regionMenuTarget, action);
@@ -2913,19 +2913,19 @@ export function initCanvasDrag() {
     if (layerMenu) return;
 
     layerMenu = buildStyledMenu('canvas-layer-menu', [
-      { key: 'bring-front',     label: 'Bring to Front' },
-      { key: 'forward-one',     label: 'Bring Forward' },
-      { key: 'backward-one',    label: 'Send Backward' },
-      { key: 'send-back',       label: 'Send to Back' },
+      { key: 'bring-front',     label: '置于顶层' },
+      { key: 'forward-one',     label: '上移一层' },
+      { key: 'backward-one',    label: '下移一层' },
+      { key: 'send-back',       label: '置于底层' },
       { key: 'sep' },
-      { key: 'flip-horizontal', label: 'Flip Horizontal' },
-      { key: 'flip-vertical',   label: 'Flip Vertical' },
-      { key: 'edit-label',      label: 'Edit Label' },
+      { key: 'flip-horizontal', label: '水平翻转' },
+      { key: 'flip-vertical',   label: '垂直翻转' },
+      { key: 'edit-label',      label: '编辑标签' },
       { key: 'sep2' },
-      { key: 'group-selected',  label: 'Group with Selection\u2026' },
-      { key: 'ungroup',         label: 'Ungroup' },
+      { key: 'group-selected',  label: '与所选素材组合...' },
+      { key: 'ungroup',         label: '取消组合' },
       { key: 'sep3' },
-      { key: 'delete',          label: 'Delete Asset', danger: true }
+      { key: 'delete',          label: '删除素材', danger: true }
     ], action => {
       if (!layerMenuTarget) return;
       handleLayerAction(layerMenuTarget, action);
@@ -3006,10 +3006,10 @@ export function initCanvasDrag() {
     if (action === 'group-selected') {
       const existing = getGroupOfItem(item);
       if (existing) {
-        window.alert('This asset already belongs to a group. Ungroup it first.');
+        window.alert('这个素材已经属于一个组合，请先取消组合。');
         return;
       }
-      window.alert('Use the Select tool and drag a marquee around the assets you want to group.');
+      window.alert('请使用“选择”工具，拖框圈选要组合的素材。');
       return;
     }
 
@@ -3027,7 +3027,7 @@ export function initCanvasDrag() {
     }
 
     if (action === 'edit-label') {
-      const text = prompt('Label this asset', item.label || '');
+      const text = prompt('为这个素材命名', item.label || '');
       if (text !== null) {
         setItemLabel(item, text);
       }
@@ -3785,7 +3785,7 @@ export function initCanvasDrag() {
     const exportCompositeBtn = document.getElementById('export-composite-btn');
 
     if (selectBtn) {
-      selectBtn.title = 'Select — drag on empty canvas to marquee-select and group assets. Hold Ctrl/Command or Space (or use the middle mouse button) to pan.';
+      selectBtn.title = '选择：在画布空白处拖拽可框选并组合素材。按住 Ctrl/Command 或空格键（也可用鼠标中键）可平移。';
       selectBtn.onclick = () => {
         deactivateRegionMode();
         deactivatePaintMode();
@@ -3854,7 +3854,7 @@ export function initCanvasDrag() {
     if (labelBtn) {
       labelBtn.onclick = () => {
         if (!currentSelectedItem) return;
-        const text = prompt('Enter image label', currentSelectedItem.label || '');
+        const text = prompt('输入图像标签', currentSelectedItem.label || '');
         if (text !== null) {
           setItemLabel(currentSelectedItem, text);
         }
@@ -4585,3 +4585,4 @@ export function initCanvasDrag() {
 }
 
 window.initCanvasDrag = initCanvasDrag;
+

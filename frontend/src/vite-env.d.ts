@@ -7,3 +7,6 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+declare module '@/lib/canvasDrag.js'
+declare module '@/lib/useStitching.js'

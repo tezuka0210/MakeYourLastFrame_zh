@@ -1,22 +1,25 @@
-# Make Your Last Frame  (Local Demo)
+# Make Your Last Frame 中文版
 
-MakeYourLastFrame is an iterative video authoring system designed to bridge the gap between abstract user intent and precise generative control. By treating generated images as a collection of re-authorable Visual Assets, the system allows users to intervene in the generative process to resolve spatial, structural, and temporal inconsistencies.
+Make Your Last Frame 是一个迭代式视频创作系统，用于把抽象创意意图逐步转化为可控的图像、视频、音频和关键帧资产。系统把生成结果拆解为可再次编辑的视觉资产，让用户可以在生成流程中持续干预空间布局、主体结构和时间连续性。
 
-## 🏗️ System Architecture
+## 系统架构
 
-MYLF adopts a decoupled architecture to ensure flexibility and modularity:
-- MakeYourLastFrame (Frontend & Logic): The primary application that manages the Visual Asset Re-Authoring lifecycle, including Intent Drafting, Entity Grounding, and the Phase-based Workflow.
-- ComfyUI Backend (Independent): A standalone, high-performance generative backend. The system communicates with ComfyUI via API to execute complex diffusion pipelines without bloating the main application logic.
-- Backend Intelligence (SAM3): Integrated within MakeYourFinalFrame/backend, the Segment Anything Model 3 (SAM3) serves as the core engine for Entity Grounding, enabling precise pixel-level mask generation for specific scene entities.
+本项目采用前后端分离架构：
 
-## 📦 Technical Model Stack
-The system orchestrates a suite of state-of-the-art models to ensure high-fidelity outcomes:
-```
+- Make Your Last Frame 前端：基于 Vue / Vite，负责节点树、画布、素材暂存区、关键帧取景框和视频拼接时间线。
+- Python 后端：提供节点管理、资产上传、ComfyUI 调用、拼接导出、语音识别和多 Agent 提示词处理。
+- ComfyUI 后端：独立运行的生成后端，通过 API 执行图像、视频、音频等工作流。
+- SAM / 实体分割：用于根据视觉实体生成分割结果，支持后续资产再编辑。
+
+## 模型与工作流
+
+项目通过 `backend/workflows/` 中的 ComfyUI API JSON 调用不同生成流程。常见模型包括：
+
+```text
 flux-2-klein-base-9b-fp8.safetensors
 flux1-fill-dev.safetensors
 z_image_turbo_bf16.safetensors
 Wan2_1-T2V-14B_fp8_e4m3fn.safetensors
-
 wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors
 wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors
 wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors
@@ -27,143 +30,70 @@ wan2.2_fun_control_high_noise_14B_fp8_scaled.safetensors
 wan2.2_fun_control_low_noise_14B_fp8_scaled.safetensors
 ```
 
-## 📂 Project Structure
-To ensure the system functions correctly, please organize your directories as follows:
+## 目录结构
+
+```text
+MakeYourLastFrame_ZH/
+├── backend/                 # Python 后端、Agent、数据库、工作流 JSON
+│   ├── agents/              # 多 Agent 与提示词处理
+│   ├── workflows/           # ComfyUI API JSON 文件
+│   └── templates/           # 后端模板
+├── frontend/                # Vue / Vite 前端
+│   ├── src/components/      # 页面组件
+│   ├── src/lib/             # 画布、节点图、语音、拼接等逻辑
+│   └── src/composables/     # 前端状态与 API 调用
+└── README.md
 ```
-├── MakeYourFinalFrame/          # Main Application Root
-│   ├── backend/                 # Backend-specific logic
-│       └── sam3/                # SAM3 model weights and inference 
-│       └──workflows/            # ComfyUI API JSON files (MUST be placed here)
-│   └── frontend/                # UI and State Management
-├── ComfyUI/                     # Standalone ComfyUI Root
-│   ├── models/
-│   │   └── diffusion_models/    # Place Flux2 and Wan2.2 weights here
-│   └── ...
-└── ...
-```
-## 🌟 Key Features
 
-MakeYourLastFrame turns the linear text-to-video process into a controllable, iterative authoring experience. The core loop is:
+## 核心功能
 
-> **generate → decompose into named parts → rearrange on a shared scene → cut viewports → generate again**
+- 节点式创作树：记录每次生成、上传、编辑、合并和反馈。
+- 可编辑画布：拖入图像、视频帧、分割实体和手绘内容，支持移动、缩放、翻转、分层和组合。
+- 关键帧取景框：在同一大画布上裁出多个关键帧视口，保持连续帧之间的空间一致性。
+- Prompt Agent：把用户自然语言拆解为实体、属性、关系和可编辑提示词线索。
+- 实体分割：根据视觉主体生成独立资产，便于再次排布。
+- 底部时间线：暂存素材、视频轨、音频轨，并导出拼接结果。
+- 语音输入：浏览器录音后发送到后端转写，可用于提示词输入。
 
-### Automatic entity decomposition
+## 本地运行
 
-After each generation, a vision model inspects the result together with the prompt it came from and proposes which parts of the scene are worth keeping as separate assets. SAM3 then cuts them out and stores each one as a named PNG in `backend/entities/`.
+### 前置要求
 
-Decomposition follows explicit priority rules: living, moving subjects first; prominent independent structures second; vegetation excluded unless it is the subject. Attached items are never split from their subject — a person in a dress is one entity, `person`, not two.
+- Python 3.10.14
+- Node.js 18 或更高版本
+- 可访问的 ComfyUI 服务
+- 如需生成大模型工作流，建议使用 NVIDIA GPU
 
-Each entity is registered with a name, a thumbnail, and an appearance record listing every node it shows up in, so an asset can be traced across the whole authoring tree.
+### 后端
 
-### Re-authoring canvas
-
-A single scene canvas, larger than any one frame, is where assets are recomposed:
-
-- Drop in generated results, uploaded images, segmented entities, and buffered assets
-- Move, resize, flip, and reorder in depth; z-order is fully controllable from the right-click menu
-- Draw by hand directly on the canvas (live iPad + Procreate input is supported)
-- Paint masks and select regions
-- Export the arrangement as a composite, a source image, or a mask
-
-**Pixel-accurate hit testing.** Segmented PNGs and hand-drawn strokes carry large transparent margins. Pressing inside a transparent area does *not* grab the asset — the click falls through to the canvas, so marquee selection and panning keep working over visually empty space.
-
-### Keyframe viewports
-
-Keyframes are not composed one at a time. You build one over-complete scene and then cut multiple viewports out of it. Overlapping viewports share content by construction, which is what makes consecutive keyframes read as the same place.
-
-- **Aspect-ratio snapping.** While dragging a viewport, the nearest common aspect ratio is detected and snapped to within a 5% tolerance, with a ratio badge and alignment guides. After drawing, the tool returns to Select mode. Hold <kbd>Alt</kbd> to draw freely.
-  Supported: `9:16` · `2:3` · `3:4` · `1:1` · `5:4` · `4:3` · `3:2` · `16:9` · `1.85:1` · `2:1` · `21:9` · `2.39:1`
-- **Right-click a viewport's grip bar** to duplicate right or down with either no overlap (and a small gap) or 30% overlap, push in, pull out, match size to the first viewport, or delete. While dragging a viewport, the largest overlap is shaded and its percentage updates live. All duplication and scaling preserve the source aspect ratio.
-- Viewports with mismatched aspect ratios are flagged in the console, since frames of differing ratios cannot be cut together.
-- Scene-space viewport size is free and meaningful: a larger box is a wider shot, a smaller box a tighter one.
-
-### Asset groups
-
-Assets can be packaged into a named group that behaves as one unit while preserving the spatial relationships inside it — for example a segmented character plus a hand-drawn element that must stay in a fixed relation to it.
-
-- Drag a marquee on empty canvas to select two or more assets; name the group when prompted
-- Dragging any member moves the whole group; scrolling over any member scales the group about its bounding-box centre
-- **The group is the unit of selection.** Pressing any member highlights the group's outline, not the individual asset, so it is always clear that the whole package is about to move
-- Double-click the group label to rename; right-click it to rename, scale, ungroup, or delete the group with its assets
-- Moving a keyframe viewport does **not** disturb grouped assets, since a group represents a deliberate arrangement
-
-The group outline and its members share one rendering path — both are positioned by GPU-composited transforms, and during a drag the outline is translated by the same delta rather than re-measured each frame. Without this the outline lags behind its contents and smears.
-
-### Composition records
-
-Every viewport export is recorded alongside the flattened PNG: the viewport rectangle in scene coordinates, and for each asset its identity, depth order, scene rectangle, position normalised to the viewport, visibility, and coverage. Records from one canvas state share a `scene_session_id`.
-
-This makes the shared content between any two keyframes directly queryable — which assets they have in common, and how much their viewports geometrically overlap.
-
-### Multi-agent intent alignment
-
-A Master / Workflow / Prompt agent chain turns rough intent into model-specific prompts, decomposing input into editable positive and negative cues and folding in descriptions of the assets currently in play.
-
-### Anchor-based temporal synthesis
-
-Re-authored keyframes act as stable anchors for Wan2.2 video generation, including first/last-frame conditioning, camera control, and frame interpolation. Selected clips are assembled on a multi-track buffer timeline (image / video / audio) and exported as a single video.
-
-### Node-based authoring trace
-
-Every step is a node in a tree with full provenance. Branches capture alternatives, merge nodes recombine them, and any earlier state can be revisited. Generative backends are swapped by changing ComfyUI workflow JSON without touching the authoring logic.
-
-## 🖱️ Interaction Model
-
-| Where you press | Left drag | <kbd>Space</kbd> + left, or middle | Right click |
-|---|---|---|---|
-| Opaque part of an asset | Move the asset — or the whole group, with the group outline highlighted | Pan the canvas | Asset menu |
-| Transparent part of an asset | Marquee-select | Pan the canvas | — |
-| Empty canvas | Marquee-select | Pan the canvas | — |
-| Viewport grip bar | Move the viewport | Pan the canvas | Viewport menu |
-| Group label | — | — | Group menu (double-click to rename) |
-
-Scroll wheel zooms the canvas; scrolling over an asset scales that asset, or its group. Right-click is reserved for context menus and never pans.
-
-## 🔌 Composition Records API
-
-Additive endpoints, independent of the main authoring flow:
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `POST` | `/api/composition/record` | Store the composition behind one viewport export |
-| `GET` | `/api/composition/records?scene_session_id=…&tree_id=…` | Retrieve stored records |
-| `GET` | `/api/composition/intersections?scene_session_id=…` | For every pair of viewports in a scene, report the assets they share and their geometric overlap (area and IoU) |
-
-Records live in the `CompositionRecords` table, created on demand at startup. Existing databases are upgraded in place without touching other tables.
-
-## 📦 Getting Started
-Prerequisites
-- Python 3.10.14 (the project-level `.python-version` lets pyenv select it automatically)
-- Node.js 18+
-- NVIDIA GPU 
-Installation
-1. Clone the Repository
-```
-git clone https://github.com/tezuka0210/MakeYourLastFrame.git
-cd MakeYourLastFrame
-```
-2. Backend Setup
-```
+```powershell
 cd backend
 python -m pip install -r requirements.txt
 python app.py
 ```
-3. Frontend Setup
-```
+
+### 前端
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-## Speech-to-text configuration
+启动后根据终端输出访问 Vite 开发服务器地址。
 
-The microphone control records audio in the browser and sends it to the backend;
-the backend uses DMXAPI's Qwen Omni audio-input endpoint by default, while
-retaining `gpt-4o-transcribe` as a configurable compatibility path. Copy
-`backend/.env.example` to `backend/.env` and set `SPEECH_TRANSCRIBE_API_KEY` to a
-DMXAPI Key before starting the backend. The key remains server-side and is never
-sent to the browser. Browser-recorded WebM is automatically converted to WAV
-before upload, so FFmpeg must be available on the backend host. Domain hotwords,
-aliases and post-recognition corrections are configured in
-`backend/speech_glossary.json`; see `backend/speech_glossary.example.json` and
-`docs/语音输入转文本功能说明.md` for the model-switching and glossary details.
+## 语音输入配置
+
+浏览器端麦克风会录制音频并发送到后端。后端默认使用 DMXAPI 的 Qwen Omni 音频输入接口，同时保留 `gpt-4o-transcribe` 作为可配置兼容路径。
+
+请复制 `backend/.env.example` 为 `backend/.env`，并设置：
+
+```text
+SPEECH_TRANSCRIBE_API_KEY=你的 API Key
+```
+
+后端主机需要安装 FFmpeg，用于把浏览器录制的 WebM 转为 WAV。领域热词、别名和识别后修正规则配置在 `backend/speech_glossary.json`。
+
+## 中文化说明
+
+当前版本已将主要前端页面、交互提示、节点卡片、画布菜单、工作流表单、README 和后端 Agent system prompt 改为中文。为保证下游 ComfyUI / FLUX / Wan 等模型效果，后端 Agent 仍会要求最终传给生成模型的 positive / negative prompt 使用英文内容。

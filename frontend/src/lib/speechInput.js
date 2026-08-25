@@ -61,7 +61,7 @@ function formatCsvTimestamp(date = new Date()) {
 
 export function exportSpeechTimingRecordsCsv() {
   if (!speechTimingRecords.length) {
-    window.alert('No speech test data available to export.')
+    window.alert('暂无可导出的语音测试数据。')
     return
   }
 
@@ -130,6 +130,22 @@ function logSpeechTiming(record, backendTiming) {
     metric: '用户等待延迟',
     valueMs: record.userWaitLatencyMs
   }])
+}
+
+
+function postInteractionMetric(payload) {
+  try {
+    fetch('/api/metrics/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(err => {
+      console.warn('[Interaction Metrics] Failed to save speech metric', err)
+    })
+  } catch (err) {
+    console.warn('[Interaction Metrics] Failed to save speech metric', err)
+  }
 }
 
 function appendText(baseText, addition) {
@@ -214,7 +230,7 @@ export function startBrowserSpeechInput({
   lang = import.meta.env.VITE_SPEECH_INPUT_LANGUAGE || 'auto'
 }) {
   if (!isSpeechInputSupported()) {
-    throw new Error('Speech input is not supported in this browser')
+    throw new Error('当前浏览器不支持语音输入')
   }
 
   const baseText = getValue ? getValue() : ''
@@ -289,6 +305,15 @@ export function startBrowserSpeechInput({
         success: true,
         backendTiming: result.timing
       }))
+      postInteractionMetric({
+        event_type: 'speech_input',
+        prompt_input_view: 'speech',
+        prompt_text: polished,
+        speech_timing: record,
+        payload: {
+          backendTiming: result.timing
+        }
+      })
       logSpeechTiming(record, result.timing)
     } catch (err) {
       timingState.responseReceivedTime = timingState.responseReceivedTime || nowMs()
@@ -299,6 +324,14 @@ export function startBrowserSpeechInput({
         success: false,
         errorMessage
       }))
+      postInteractionMetric({
+        event_type: 'speech_input',
+        prompt_input_view: 'speech',
+        speech_timing: record,
+        payload: {
+          errorMessage
+        }
+      })
       logSpeechTiming(record, null)
       if (onError) onError(err?.message || 'speech-transcription-error')
     } finally {

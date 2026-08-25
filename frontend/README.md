@@ -1,48 +1,33 @@
-# frontend
+# 前端说明
 
-This template should help get you started developing with Vue 3 in Vite.
+本目录是 Make Your Last Frame 中文版前端，基于 Vue 3、Vite 和 TypeScript。
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## 安装依赖
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## 开发运行
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## 构建检查
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## 代码质量
 
 ```sh
 npm run lint
 ```
+
+主要源码位于 `src/`：
+
+- `components/`：页面组件、弹窗、左右面板、时间线。
+- `lib/`：画布拖拽、节点图渲染、工作流表单、语音输入、素材卡片等逻辑。
+- `composables/`：前端状态管理和后端 API 调用。

@@ -10,7 +10,7 @@
       <button
         @click="handleClose"
         class="modal-close-btn"
-        aria-label="Close preview"
+        aria-label="关闭预览"
       >
         ×
       </button>
@@ -18,7 +18,7 @@
       <img
         v-if="props.type === 'image'"
         :src="props.url"
-        alt="Preview image"
+        alt="预览图像"
         class="block max-w-full max-h-[80vh] mx-auto rounded-md"
       />
 
@@ -30,7 +30,7 @@
         loop
         class="block max-w-full max-h-[80vh] mx-auto rounded-md"
       >
-        Your browser does not support this video.
+        当前浏览器不支持播放此视频。
       </video>
     </div>
   </div>
@@ -66,4 +66,3 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 </script>
-

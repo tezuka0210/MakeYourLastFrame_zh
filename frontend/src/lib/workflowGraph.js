@@ -148,31 +148,31 @@ function getSelectionColor(node) {
 }
 
 function getNodeHeaderBaseLabel(node) {
-  if (node.isComposite) return `Overlap (${node.combinedNodes?.length || 0})`;
-  if (node.module_id === 'AddText') return 'Note';
-  if (node.module_id === 'AddWorkflow') return 'Plan';
-  return node.displayName || node.module_id || 'State';
+  if (node.isComposite) return `合并节点（${node.combinedNodes?.length || 0}）`;
+  if (node.module_id === 'AddText') return '草稿';
+  if (node.module_id === 'AddWorkflow') return '规划';
+  return node.displayName || node.module_id || '状态';
 
 
   const mid = (node.module_id || '').toLowerCase()
 
-  if (mid === 'addtext') return 'Note'
-  if (mid === 'addworkflow') return 'Plan'
+  if (mid === 'addtext') return '草稿'
+  if (mid === 'addworkflow') return '规划'
 
-  return node.displayName || node.module_id || 'State'
+  return node.displayName || node.module_id || '状态'
 }
 
 function getNodeMetaTag(node) {
-  if (node.isComposite) return 'overlap state'
+  if (node.isComposite) return '合并状态'
   const mid = (node.module_id || '').toLowerCase()
-  if (mid === 'init') return 'root state'
-  if (mid === 'addtext') return 'draft note'
-  if (mid === 'addworkflow') return 'plan state'
+  if (mid === 'init') return '根状态'
+  if (mid === 'addtext') return '草稿笔记'
+  if (mid === 'addworkflow') return '规划状态'
   const cat = getNodeCategory(node)
-  if (cat === 'image') return 'image draft'
-  if (cat === 'video') return 'video draft'
-  if (cat === 'audio') return 'audio draft'
-  return 'draft state'
+  if (cat === 'image') return '图像草稿'
+  if (cat === 'video') return '视频草稿'
+  if (cat === 'audio') return '音频草稿'
+  return '草稿状态'
 }
 
 /** 统一控制卡片选中样式 */
@@ -438,11 +438,11 @@ function addRightClickMenu(card, d, emit) {
         })
     }
 
-    addMenuItem('Create Child Draft', () => {
+    addMenuItem('创建子草稿', () => {
       emit('create-card', d, 'AddText', 'util')
     })
 
-    addMenuItem('Add Re-authoring Plan', () => {
+    addMenuItem('添加再编辑规划', () => {
       emit('create-card', d, 'AddWorkflow', 'util')
     })
 
@@ -626,7 +626,7 @@ export function renderTree(
       .attr('x', '50%').attr('y', '50%')
       .attr('text-anchor', 'middle')
       .attr('fill', '#ffffffff')//#9ca3af
-      .text('No draft states yet. Create a child draft to begin.')
+      .text('暂无草稿状态。创建一个子草稿开始。')
     return
   }
 
@@ -1256,14 +1256,14 @@ export function renderTree(
           items.push({
             url,
             type: deriveMediaKind(url),
-            label: node.displayName || node.label || node.module_id || 'State'
+            label: node.displayName || node.label || node.module_id || '状态'
           })
         })
       } else {
         items.push({
           url: '',
           type: 'empty',
-          label: node.displayName || node.label || node.module_id || 'State'
+          label: node.displayName || node.label || node.module_id || '状态'
         })
       }
     })
@@ -1429,7 +1429,7 @@ export function renderTree(
       .style('justify-content', 'center')
       .style('font-size', '18px')
       .style('color', '#64748b')
-      .text('Audio')
+      .text('音频')
   }
 function getMediaBoxState(node, boxKey = 'default') {
   if (!node.__mediaBoxState) node.__mediaBoxState = {}
@@ -1645,7 +1645,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       source: 'workflow-result',
       nodeId: node?.id || '',
       moduleId: node?.module_id || '',
-      displayName: node?.displayName || node?.label || node?.module_id || 'State',
+      displayName: node?.displayName || node?.label || node?.module_id || '状态',
       type: type || deriveMediaKind(safeUrl),
       url: safeUrl,
       mediaUrl: safeUrl,
@@ -1687,7 +1687,7 @@ function addMediaBoxResizeHandle(box, boxState) {
 
   function renderThumbRow(parent, urls, options = {}) {
     const {
-      emptyText = 'No media yet',
+      emptyText = '暂无媒体',
       onThumbClick = null,
       onStageClick = null,
       makeDroppable = false,
@@ -1804,7 +1804,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       }
 
       if (onStageClick) {
-        buildTinyButton(tile, '↗', 'Add to staging', () => onStageClick(url, type))
+        buildTinyButton(tile, '↗', '加入暂存区', () => onStageClick(url, type))
           .style('position', 'absolute')
           .style('top', '4px')
           .style('right', '4px')
@@ -2093,8 +2093,8 @@ function addMediaBoxResizeHandle(box, boxState) {
       speechButton
         .html(speechPolishing ? ellipsisIcon : (speechListening ? stopIcon : microphoneIcon))
         .attr('title', !isSpeechInputSupported()
-          ? 'Speech input is not supported in this browser'
-          : (speechPolishing ? 'Polishing speech text' : (speechListening ? 'Stop speech input' : 'Start speech input')))
+          ? '当前浏览器不支持语音输入'
+          : (speechPolishing ? '正在润色语音文本' : (speechListening ? '停止语音输入' : '开始语音输入')))
         .style('opacity', speechPolishing ? '0.65' : '1')
     }
 
@@ -2361,11 +2361,11 @@ function addMediaBoxResizeHandle(box, boxState) {
           updatePositiveCue(index, { text: this.value })
         })
 
-      buildTinyButton(row, '+', `Add ${config.label.toLowerCase()} cue below`, () => addPositiveCue(config.type, index))
+      buildTinyButton(row, '+', `在下方添加${config.label}线索`, () => addPositiveCue(config.type, index))
         .style('padding', '0')
         .style('min-width', '18px')
         .style('justify-self', 'end')
-      buildTinyButton(row, '×', `Delete ${config.label.toLowerCase()} cue`, () => deletePositiveCue(index))
+      buildTinyButton(row, '×', `删除${config.label}线索`, () => deletePositiveCue(index))
         .style('padding', '0')
         .style('min-width', '18px')
         .style('justify-self', 'end')
@@ -2377,9 +2377,9 @@ function addMediaBoxResizeHandle(box, boxState) {
       positiveCount.text(`(${positivePhrases.filter(item => String(item.text || '').trim()).length})`)
 
       const configs = [
-        { type: 'relation', label: 'Relations', ...cuePalette.relation },
-        { type: 'entity', label: 'Entities', ...cuePalette.entity },
-        { type: 'attribute', label: 'Attributes', ...cuePalette.attribute }
+        { type: 'relation', label: '关系', ...cuePalette.relation },
+        { type: 'entity', label: '实体', ...cuePalette.entity },
+        { type: 'attribute', label: '属性', ...cuePalette.attribute }
       ]
 
       configs.forEach(config => {
@@ -2397,7 +2397,7 @@ function addMediaBoxResizeHandle(box, boxState) {
 
         const toggle = head.append('xhtml:button')
           .attr('type', 'button')
-          .attr('title', `${collapsedCueGroups[config.type] ? 'Expand' : 'Collapse'} ${config.label}`)
+          .attr('title', `${collapsedCueGroups[config.type] ? '展开' : '收起'}${config.label}`)
           .style('border', 'none')
           .style('padding', '0')
           .style('background', 'transparent')
@@ -2417,7 +2417,7 @@ function addMediaBoxResizeHandle(box, boxState) {
           renderPositiveEditor()
         })
 
-        buildTinyButton(head, '+', `Add ${config.label.toLowerCase()} cue`, () => addPositiveCue(config.type))
+        buildTinyButton(head, '+', `添加${config.label}线索`, () => addPositiveCue(config.type))
           .style('margin-left', 'auto')
           .style('padding', '0')
           .style('min-width', '18px')
@@ -2427,7 +2427,7 @@ function addMediaBoxResizeHandle(box, boxState) {
             .style('font-size', '9px')
             .style('color', '#9ca3af')
             .style('padding', '2px 0')
-            .text(`No ${config.label.toLowerCase()} yet`)
+            .text(`暂无${config.label}`)
         } else {
           entries.forEach(entry => renderPositiveCue(body, entry, config))
         }
@@ -2445,7 +2445,7 @@ function addMediaBoxResizeHandle(box, boxState) {
           .style('font-size', '9px')
           .style('color', '#9ca3af')
           .style('padding', '2px 0')
-          .text('No negative cues yet')
+          .text('暂无负向线索')
       }
 
       entries.forEach(({ phrase, index }) => {
@@ -2500,14 +2500,14 @@ function addMediaBoxResizeHandle(box, boxState) {
             syncPromptStateFromUI()
           })
 
-        buildTinyButton(row, '+', 'Add negative cue below', () => {
+        buildTinyButton(row, '+', '在下方添加负向线索', () => {
           const next = [...negativePhrases]
           next.splice(index + 1, 0, { text: '', weight: 1.0, type: 'attribute' })
           negativePhrases = next
           renderNegativeEditor()
           syncPromptStateFromUI()
         }).style('padding', '0').style('min-width', '18px').style('justify-self', 'end')
-        buildTinyButton(row, '×', 'Delete negative cue', () => {
+        buildTinyButton(row, '×', '删除负向线索', () => {
           negativePhrases = negativePhrases.filter((_, itemIndex) => itemIndex !== index)
           renderNegativeEditor()
           syncPromptStateFromUI()
@@ -2520,11 +2520,11 @@ function addMediaBoxResizeHandle(box, boxState) {
       renderNegativeEditor()
     }
 
-    const sec = buildCollapsibleSection(parent, 'Prompts', true, (controls) => {
-      speechButton = buildTinyButton(controls, '', 'Start speech input', toggleSpeechInput)
+    const sec = buildCollapsibleSection(parent, '提示词', true, (controls) => {
+      speechButton = buildTinyButton(controls, '', '开始语音输入', toggleSpeechInput)
       updateSpeechButton()
 
-      buildTinyButton(controls, '', 'Agent assist', async () => {
+      buildTinyButton(controls, '', 'Agent 辅助', async () => {
         try {
           clearPrevAgentContext()
 
@@ -2572,7 +2572,7 @@ function addMediaBoxResizeHandle(box, boxState) {
         }
       }).html(agentIcon)
 
-      buildTinyButton(controls, '', 'Regenerate', () => {
+      buildTinyButton(controls, '', '重新生成', () => {
         const next = syncPromptStateFromUI()
         const regenerated = { ...(node.parameters || {}) }
         regenerated.text = next.note
@@ -2601,7 +2601,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       .style('background', '#f9fafb')
       .style('resize', 'none')
       .style('outline', 'none')
-      .attr('placeholder', 'Describe the scene, operation, or target effect...')
+      .attr('placeholder', '描述场景、操作或目标效果...')
       .property('value', promptState.note)
       .on('mousedown', ev => ev.stopPropagation())
       .on('blur', () => syncPromptStateFromUI())
@@ -2614,15 +2614,15 @@ function addMediaBoxResizeHandle(box, boxState) {
 
     const posWrap = cuesRow.append('xhtml:div').style('display', 'flex').style('flex-direction', 'column').style('gap', '4px')
     const posHead = posWrap.append('xhtml:div').style('display', 'flex').style('align-items', 'center').style('gap', '6px')
-    posHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('Positive cues')
+    posHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('正向线索')
     positiveCount = posHead.append('xhtml:span').style('font-size', '10px').style('color', '#9ca3af').text('(0)')
     positiveContainer = posWrap.append('xhtml:div')
 
     const negWrap = cuesRow.append('xhtml:div').style('display', 'flex').style('flex-direction', 'column').style('gap', '4px')
     const negHead = negWrap.append('xhtml:div').style('display', 'flex').style('align-items', 'center').style('gap', '6px')
-    negHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('Negative cues')
+    negHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('负向线索')
     negativeCount = negHead.append('xhtml:span').style('font-size', '10px').style('color', '#9ca3af').text('(0)')
-    buildTinyButton(negHead, '+', 'Add negative cue', () => {
+    buildTinyButton(negHead, '+', '添加负向线索', () => {
       negativePhrases = [...negativePhrases, { text: '', weight: 1.0, type: 'attribute' }]
       renderNegativeEditor()
       syncPromptStateFromUI()
@@ -2654,7 +2654,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       state.inputUrls = syncNodeInputAssets(node, mediaState)
     }
 
-    const sec = buildCollapsibleSection(parent, 'Assets', true, (controls) => {
+    const sec = buildCollapsibleSection(parent, '素材', true, (controls) => {
       const uploader = createHiddenUploader(controls, node, emit, (localUrls, files = []) => {
         files.forEach((file, idx) => {
           appendLocalUrls([localUrls[idx]], file?.type?.startsWith('video/')
@@ -2665,7 +2665,7 @@ function addMediaBoxResizeHandle(box, boxState) {
         })
         renderRow()
       })
-      buildTinyButton(controls, '+', 'Upload assets', () => uploader.node().click())
+      buildTinyButton(controls, '+', '上传素材', () => uploader.node().click())
     })
 
     const contentRoot = sec.content.append('xhtml:div')
@@ -2673,7 +2673,7 @@ function addMediaBoxResizeHandle(box, boxState) {
     const renderRow = () => {
       contentRoot.selectAll('*').remove()
       renderThumbRow(contentRoot, state.inputUrls, {
-        emptyText: 'Upload or drop input assets here',
+        emptyText: '上传或拖入输入素材',
         makeDroppable: true,
         node,
         boxKey: 'assets',
@@ -2699,7 +2699,7 @@ function addMediaBoxResizeHandle(box, boxState) {
   }
 
   function buildResultsSection(parent, node, emit, state) {
-    const sec = buildCollapsibleSection(parent, 'Results', true)
+    const sec = buildCollapsibleSection(parent, '结果', true)
 
     const root = sec.content
       .append('xhtml:div')
@@ -2726,7 +2726,7 @@ function addMediaBoxResizeHandle(box, boxState) {
         .style('font-size', '10px')
         .style('color', '#9ca3af')
         .style('pointer-events', 'none')
-        .text(hasSegment ? '' : 'No segmented results yet')
+        .text(hasSegment ? '' : '暂无分割结果')
 
       box.append('xhtml:div')
         .attr('id', `entities-${segmentHostKey}`)
@@ -2751,7 +2751,7 @@ function addMediaBoxResizeHandle(box, boxState) {
     // 情况 B：普通生成节点
     if (hasOutput) {
       renderThumbRow(root, outputUrls, {
-        emptyText: 'No generated results yet',
+        emptyText: '暂无生成结果',
         boxed: true,
         node,
         boxKey: 'results',
@@ -2760,7 +2760,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       })
     } else {
       renderThumbRow(root, [], {
-        emptyText: 'No generated results yet',
+        emptyText: '暂无生成结果',
         boxed: true,
         node,
         boxKey: 'results'
@@ -2778,10 +2778,10 @@ function addMediaBoxResizeHandle(box, boxState) {
 
   function buildFeedbackSection(parent, node, emit) {
     const options = [
-      { value: 'exact', label: 'Exactly right' },
-      { value: 'reframed', label: 'Different, better' },
-      { value: 'deferred', label: 'Different, keep it' },
-      { value: 'redo', label: 'Redo' }
+      { value: 'exact', label: '完全正确' },
+      { value: 'reframed', label: '不同但更好' },
+      { value: 'deferred', label: '不同但保留' },
+      { value: 'redo', label: '重做' }
     ]
     const savedFeedback = node.parameters?.generation_feedback || {}
     let selectedValue = options.some(option => option.value === savedFeedback.value)
@@ -2809,7 +2809,7 @@ function addMediaBoxResizeHandle(box, boxState) {
 
     const submitFeedback = () => {
       if (!selectedValue) {
-        setStatus('Select one')
+        setStatus('请选择一项')
         return
       }
       const selected = options.find(option => option.value === selectedValue)
@@ -2824,20 +2824,20 @@ function addMediaBoxResizeHandle(box, boxState) {
       }
 
       setSubmitting(true)
-      setStatus('Submitting…', '#6b7280')
+      setStatus('提交中...', '#6b7280')
       emit('submit-feedback', node.id, feedback, (succeeded) => {
         if (succeeded) {
-          setStatus('Submitted')
+          setStatus('已提交')
         } else {
-          setStatus('Could not submit', '#9f5f5f')
+          setStatus('提交失败', '#9f5f5f')
           setSubmitting(false)
         }
       })
     }
 
-    const sec = buildCollapsibleSection(parent, 'Feedback', false, (controls) => {
-      submitButton = buildTinyButton(controls, '', 'Submit feedback', submitFeedback)
-        .attr('aria-label', 'Submit feedback')
+    const sec = buildCollapsibleSection(parent, '反馈', false, (controls) => {
+      submitButton = buildTinyButton(controls, '', '提交反馈', submitFeedback)
+        .attr('aria-label', '提交反馈')
         .html('<svg viewBox="0 0 10 10" width="8" height="8" aria-hidden="true"><path d="M2 8L8 2M4 2h4v4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>')
     })
 
@@ -2899,12 +2899,12 @@ function addMediaBoxResizeHandle(box, boxState) {
   }
 
   function buildSettingsSection(parent, node) {
-    const sec = buildCollapsibleSection(parent, 'Settings', false)
+    const sec = buildCollapsibleSection(parent, '设置', false)
     const params = node.parameters || {}
     const excluded = new Set(['text', 'prompt_note', 'global_context', 'positive_prompt', 'negative_prompt', 'generation_feedback'])
     const keys = Object.keys(params).filter(k => !excluded.has(k))
     if (!keys.length) {
-      sec.content.append('xhtml:div').style('font-size', '10px').style('color', '#9ca3af').text('No adjustable parameters for the current function')
+      sec.content.append('xhtml:div').style('font-size', '10px').style('color', '#9ca3af').text('当前功能没有可调参数')
       return sec
     }
     const grid = sec.content.append('xhtml:div').style('display', 'grid').style('grid-template-columns', '1fr').style('gap', '6px').style('width', '100%')
@@ -3069,12 +3069,12 @@ function addMediaBoxResizeHandle(box, boxState) {
 
     headerRow.append('xhtml:span')
       .attr('class', 'io-label')
-      .text('Draft Note')
+      .text('草稿笔记')
 
     // 发送小按钮：挪到 Input Thought 右侧
     const sendBtn = headerRow.append('xhtml:button')
       .html('➤')
-      .attr('title','save')
+      .attr('title','保存')
       .attr('class', 'icon-circle-btn output-clip-btn send-btn-icon')
       .style('box-shadow', '0 1px 2px rgba(0,0,0,0.15)')
       .on('mousedown', ev => ev.stopPropagation())
@@ -3098,7 +3098,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       .style('resize', 'none')
       .style('outline', 'none')
       .style('font-family', 'inherit')
-      .attr('placeholder', 'Describe the next keyframe state, visual goal, or revision idea...')
+      .attr('placeholder', '描述下一个关键帧状态、视觉目标或修改想法...')
       .property('value', initialText)
       .on('mousedown', ev => ev.stopPropagation())
 
@@ -3120,7 +3120,7 @@ function addMediaBoxResizeHandle(box, boxState) {
       if (!d.parameters) d.parameters = {}
       d.parameters.global_context = value
       d.parameters.text = value
-      emit('regenerate-node', d.id,"AddText", d.parameters,"Intent Draft")
+      emit('regenerate-node', d.id,"AddText", d.parameters,"意图草稿")
 
       //emit('intent-draft-send', d.id, value)
       //console.log('[IntentDraft] send:', d.id, value)
@@ -3217,10 +3217,10 @@ function renderCompositeNode(gEl, d, selectedIds, emit) {
     .style('font-size', '10px')
     .style('font-weight', '600')
     .style('color', '#6b7280')
-    .text('Sources')
+    .text('来源')
 
   sourceHeader.append('xhtml:button')
-    .text('Detach')
+    .text('拆分')
     .style('height', '18px')
     .style('padding', '0 8px')
     .style('border-radius', '999px')
@@ -3301,7 +3301,7 @@ function renderCompositeNode(gEl, d, selectedIds, emit) {
         .style('justify-content', 'center')
         .style('font-size', '10px')
         .style('color', '#9ca3af')
-        .text('No output')
+        .text('暂无输出')
     }
 
     tile.append('xhtml:div')
@@ -3316,7 +3316,7 @@ function renderCompositeNode(gEl, d, selectedIds, emit) {
       .style('white-space', 'nowrap')
       .style('overflow', 'hidden')
       .style('text-overflow', 'ellipsis')
-      .text(item.label || 'State')
+      .text(item.label || '状态')
 
     if (remainingCount > 0 && idx === visibleItems.length - 1) {
       tile.append('xhtml:div')
@@ -3342,7 +3342,7 @@ function renderMediaContent(container, data) {
       .style('color', '#374151')
       .style('margin-bottom', '4px')
       .style('word-break', 'break-all')
-      .text(`Text: ${data.text.slice(0, 30)}${data.text.length > 30 ? '...' : ''}`);
+      .text(`文本：${data.text.slice(0, 30)}${data.text.length > 30 ? '...' : ''}`);
   }
 
   // 渲染图片
@@ -3380,14 +3380,14 @@ function renderMediaContent(container, data) {
     container.append('xhtml:div')
       .style('color', '#4b5563')
       .style('margin-bottom', '4px')
-      .text(`Audio: ${data.audio.length} file(s)`);
+      .text(`音频：${data.audio.length} 个文件`);
   }
 
   // 无内容提示
   if (!data.text && data.images.length === 0 && data.audio.length === 0) {
     container.append('xhtml:div')
       .style('color', '#9ca3af')
-      .text('No content');
+      .text('暂无内容');
   }
 }
 
@@ -3413,7 +3413,7 @@ function renderMediaContent(container, data) {
         .style('fill', '#6b7280')
         .style('pointer-events', 'all')
         .style('cursor', 'pointer')
-        .text('Init');
+        .text('开始');
 
       // 只有节点标题文字触发选中，圆形空白区域仅阻止事件继续冒泡。
       initTitle.on('click', (ev) => {
@@ -3454,7 +3454,7 @@ function renderMediaContent(container, data) {
             });
         };
 
-        addMenuItem('Create Child Draft', () => {
+        addMenuItem('创建子草稿', () => {
           // 和原来小加号的行为保持一致
           emit('create-card', d, 'AddText', 'util');
         });
@@ -3724,7 +3724,7 @@ function mergeSelectedNodes(allNodesData, selectedIds, emit, svgElement = null) 
     id: generateUniqueId(),
     isComposite: true,
     combinedNodes: nodesToMerge,
-    displayName: 'Merged',
+    displayName: '已合并',
     module_id: 'CompositeNode'
   };
 

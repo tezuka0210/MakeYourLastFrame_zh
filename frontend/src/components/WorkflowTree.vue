@@ -15,27 +15,27 @@
           :disabled="!canMerge"
           @click.stop="mergeSelectedNodes(localSelectedIds)"
         >
-          Merge
+          合并
         </button>
         <button
           v-if="localSelectedIds.length > 0"
           class="toolbar-btn"
           @click.stop="clearSelection"
         >
-          Clear
+          清除
         </button>
         <button
           class="toolbar-btn"
           @click.stop="startBoxSelectMode"
         >
-          {{ boxSelectMode ? 'Reselect' : 'Box' }}
+          {{ boxSelectMode ? '重新框选' : '框选' }}
         </button>
         <button
           v-if="boxSelectMode"
           class="toolbar-btn"
           @click.stop="stopBoxSelectMode"
         >
-          Done
+          完成
         </button>
       </div>
     </div>
@@ -125,11 +125,11 @@ const toolbarStatusText = computed(() => {
   const count = localSelectedIds.value.length
 
   if (boxSelectMode.value) {
-    return count > 0 ? `${count} source${count > 1 ? 's' : ''}` : 'Select sources'
+    return count > 0 ? `${count} 个来源` : '选择来源'
   }
 
   if (count > 0) {
-    return `${count} selected`
+    return `已选择 ${count} 个`
   }
 
   return ''
@@ -327,7 +327,7 @@ function buildCompositeNode(group, groupedNodes, allNodes) {
     sourceNodeIds: [...group.nodeIds],
     combinedNodes: groupedNodes.map(cloneNode),
     childrenIds: downstreamIds,
-    label: `Merged · ${groupedNodes.length}`,
+    label: `已合并 · ${groupedNodes.length}`,
     summary,
     assets: mergeNodeAssets(groupedNodes.map(n => n.assets || {})),
     linkColor: '#8b5cf6',
