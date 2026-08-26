@@ -2445,7 +2445,7 @@ function addMediaBoxResizeHandle(box, boxState) {
           .style('font-size', '9px')
           .style('color', '#9ca3af')
           .style('padding', '2px 0')
-          .text('暂无负向线索')
+          .text('暂无负向提示词')
       }
 
       entries.forEach(({ phrase, index }) => {
@@ -2500,14 +2500,14 @@ function addMediaBoxResizeHandle(box, boxState) {
             syncPromptStateFromUI()
           })
 
-        buildTinyButton(row, '+', '在下方添加负向线索', () => {
+        buildTinyButton(row, '+', '在下方添加负向提示词', () => {
           const next = [...negativePhrases]
           next.splice(index + 1, 0, { text: '', weight: 1.0, type: 'attribute' })
           negativePhrases = next
           renderNegativeEditor()
           syncPromptStateFromUI()
         }).style('padding', '0').style('min-width', '18px').style('justify-self', 'end')
-        buildTinyButton(row, '×', '删除负向线索', () => {
+        buildTinyButton(row, '×', '删除负向提示词', () => {
           negativePhrases = negativePhrases.filter((_, itemIndex) => itemIndex !== index)
           renderNegativeEditor()
           syncPromptStateFromUI()
@@ -2614,15 +2614,15 @@ function addMediaBoxResizeHandle(box, boxState) {
 
     const posWrap = cuesRow.append('xhtml:div').style('display', 'flex').style('flex-direction', 'column').style('gap', '4px')
     const posHead = posWrap.append('xhtml:div').style('display', 'flex').style('align-items', 'center').style('gap', '6px')
-    posHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('正向线索')
+    posHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('正向提示词')
     positiveCount = posHead.append('xhtml:span').style('font-size', '10px').style('color', '#9ca3af').text('(0)')
     positiveContainer = posWrap.append('xhtml:div')
 
     const negWrap = cuesRow.append('xhtml:div').style('display', 'flex').style('flex-direction', 'column').style('gap', '4px')
     const negHead = negWrap.append('xhtml:div').style('display', 'flex').style('align-items', 'center').style('gap', '6px')
-    negHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('负向线索')
+    negHead.append('xhtml:div').style('font-size', '10px').style('font-weight', '600').style('color', '#6b7280').text('负向提示词')
     negativeCount = negHead.append('xhtml:span').style('font-size', '10px').style('color', '#9ca3af').text('(0)')
-    buildTinyButton(negHead, '+', '添加负向线索', () => {
+    buildTinyButton(negHead, '+', '添加负向提示词', () => {
       negativePhrases = [...negativePhrases, { text: '', weight: 1.0, type: 'attribute' }]
       renderNegativeEditor()
       syncPromptStateFromUI()
